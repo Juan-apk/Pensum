@@ -577,7 +577,10 @@ function renderQuarters(){
 // ── Toggle / Modal ────────────────────────────────────────
 window.toggleCourse = function(code){
   if(completedCourses.has(code)){
-    if(confirm('¿Quitar esta materia de completadas?')){ completedCourses.delete(code); saveLocal(); updateStats(); renderQuarters(); }
+    if(confirm('¿Quitar esta materia de completadas?')){
+      completedCourses.delete(code); saveLocal(); updateStats(); renderQuarters();
+      autoSave();
+    }
   } else { const c=findCourse(code); if(c) openModal(c); }
 };
 function openModal(c){
@@ -591,12 +594,33 @@ function openModal(c){
   setTimeout(()=>document.getElementById('gradeInput').focus(),100);
 }
 window.closeModal = function(){ document.getElementById('gradeModal').classList.remove('open'); currentCode=null; };
+// Auto-save silently after each change
+let autoSaveTimer = null;
+function autoSave(){
+  if(!currentUser) return;
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(async ()=>{
+    try {
+      await setDoc(doc(db,'progress',currentUser.uid),{
+        completedCourses: mapToObj(completedCourses),
+        savedAt: new Date().toISOString(),
+        displayName: currentUser.displayName
+      });
+      // Show a subtle indicator
+      const el = document.getElementById('syncStatus');
+      el.className='sync-status show ok';
+      el.innerHTML='✓ Guardado automáticamente';
+      setTimeout(()=>el.classList.remove('show'), 2500);
+    } catch(e){ console.warn('Auto-save failed:', e.message); }
+  }, 1500); // wait 1.5s after last change before saving
+}
+
 window.submitGrade = function(){
   const val=document.getElementById('gradeInput').value;
   const err=document.getElementById('gradeError');
   const g=parseFloat(val);
   if(!val||isNaN(g)||g<0||g>100){ err.textContent='Ingresa una calificación entre 0 y 100.'; err.classList.remove('hidden'); return; }
-  completedCourses.set(currentCode,g); saveLocal(); updateStats(); renderQuarters(); window.closeModal();
+  completedCourses.set(currentCode,g); saveLocal(); updateStats(); renderQuarters(); window.closeModal(); autoSave();
 };
 
 // ── Firebase Auth ─────────────────────────────────────────
