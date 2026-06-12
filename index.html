@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pensum · Ing. Software</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0f0f11;
+      --surface:  #18181c;
+      --border:   #2a2a30;
+      --text:     #e8e8ec;
+      --muted:    #6b6b78;
+      --accent:   #7c6ef7;
+      --accent2:  #5eead4;
+      --done-bg:  #1a2420;
+      --done-txt: #5eead4;
+      --radius:   12px;
+      --font: 'Inter', system-ui, sans-serif;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Header ─────────────────────────────── */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .header-left { display: flex; flex-direction: column; gap: 1px; }
+    .header-title { font-size: 15px; font-weight: 600; letter-spacing: -0.3px; }
+    .header-sub   { font-size: 11px; color: var(--muted); }
+    .menu-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-family: var(--font);
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .menu-btn:hover { background: var(--border); }
+
+    /* ── Drawer ──────────────────────────────── */
+    .drawer-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.6);
+      z-index: 200;
+      opacity: 0; pointer-events: none;
+      transition: opacity .2s;
+    }
+    .drawer-overlay.open { opacity: 1; pointer-events: all; }
+
+    .drawer {
+      position: fixed;
+      top: 0; right: 0;
+      height: 100%;
+      width: min(300px, 85vw);
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      z-index: 201;
+      transform: translateX(100%);
+      transition: transform .25s cubic-bezier(.4,0,.2,1);
+      display: flex; flex-direction: column;
+      padding: 24px 20px;
+      gap: 24px;
+    }
+    .drawer.open { transform: translateX(0); }
+
+    .drawer-header {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .drawer-header h2 { font-size: 15px; font-weight: 600; }
+    .close-btn {
+      background: none; border: none; color: var(--muted);
+      font-size: 20px; cursor: pointer; line-height: 1;
+      padding: 2px 6px; border-radius: 6px;
+      transition: color .15s, background .15s;
+    }
+    .close-btn:hover { color: var(--text); background: var(--border); }
+
+    .drawer-section h3 {
+      font-size: 11px; font-weight: 500; color: var(--muted);
+      text-transform: uppercase; letter-spacing: .08em;
+      margin-bottom: 10px;
+    }
+    .drawer-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background .15s;
+      color: var(--text); text-decoration: none;
+      font-size: 13px; font-weight: 500;
+      border: none; background: none; width: 100%; text-align: left;
+      font-family: var(--font);
+    }
+    .drawer-item:hover { background: var(--border); }
+    .drawer-item-icon {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; flex-shrink: 0;
+    }
+    .icon-blue { background: rgba(124,110,247,.15); }
+    .icon-teal { background: rgba(94,234,212,.15); }
+    .icon-pink { background: rgba(244,114,182,.15); }
+
+    .drawer-footer {
+      margin-top: auto;
+      font-size: 11px; color: var(--muted); text-align: center;
+    }
+
+    /* ── Main ────────────────────────────────── */
+    main { padding: 20px; max-width: 720px; margin: 0 auto; }
+
+    /* ── Stats ───────────────────────────────── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    @media (min-width: 500px) {
+      .stats-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+    }
+    .stat-label {
+      font-size: 10px; font-weight: 500; color: var(--muted);
+      text-transform: uppercase; letter-spacing: .06em;
+      margin-bottom: 6px;
+    }
+    .stat-value {
+      font-size: 22px; font-weight: 600; letter-spacing: -1px;
+      line-height: 1;
+    }
+    .stat-value span { font-size: 13px; font-weight: 400; color: var(--muted); }
+    .stat-bar {
+      margin-top: 10px;
+      height: 2px; background: var(--border); border-radius: 99px;
+      overflow: hidden;
+    }
+    .stat-bar-fill {
+      height: 100%; border-radius: 99px;
+      background: var(--accent);
+      transition: width .5s cubic-bezier(.4,0,.2,1);
+    }
+    .stat-bar-fill.teal { background: var(--accent2); }
+
+    /* ── Search / Filter ─────────────────────── */
+    .controls {
+      display: flex; gap: 8px;
+      margin-bottom: 20px;
+    }
+    .search-wrap { position: relative; flex: 1; }
+    .search-icon {
+      position: absolute; left: 12px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 13px; color: var(--muted); pointer-events: none;
+    }
+    input[type="text"], select {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 8px;
+      font-family: var(--font);
+      font-size: 13px;
+      padding: 9px 12px;
+      outline: none;
+      transition: border-color .15s;
+    }
+    input[type="text"] { padding-left: 34px; width: 100%; }
+    input[type="text"]:focus, select:focus { border-color: var(--accent); }
+    select { color: var(--text); cursor: pointer; }
+    select option { background: var(--surface); }
+
+    /* ── Quarter ─────────────────────────────── */
+    .quarter {
+      margin-bottom: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .quarter-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 16px;
+      cursor: pointer;
+      user-select: none;
+      transition: background .15s;
+    }
+    .quarter-header:hover { background: rgba(255,255,255,.03); }
+    .quarter-title { font-size: 13px; font-weight: 600; }
+    .quarter-meta { display: flex; align-items: center; gap: 10px; }
+    .quarter-badge {
+      font-size: 11px; color: var(--muted);
+      background: var(--border);
+      padding: 2px 8px; border-radius: 99px;
+    }
+    .quarter-progress-ring { flex-shrink: 0; }
+    .chevron {
+      color: var(--muted); font-size: 11px;
+      transition: transform .2s;
+      margin-left: 8px;
+    }
+    .quarter.open .chevron { transform: rotate(180deg); }
+
+    .quarter-body {
+      display: none;
+      padding: 0 12px 12px;
+      border-top: 1px solid var(--border);
+    }
+    .quarter.open .quarter-body { display: block; }
+
+    /* ── Course row ──────────────────────────── */
+    .course-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 4px;
+      border-bottom: 1px solid rgba(255,255,255,.04);
+      cursor: pointer;
+      border-radius: 6px;
+      transition: background .12s;
+    }
+    .course-row:last-child { border-bottom: none; }
+    .course-row:hover { background: rgba(255,255,255,.04); }
+
+    .course-check {
+      width: 20px; height: 20px;
+      border-radius: 6px;
+      border: 1.5px solid var(--border);
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      transition: all .15s;
+    }
+    .course-check.done {
+      border-color: var(--accent2);
+      background: rgba(94,234,212,.15);
+    }
+    .course-check.done::after {
+      content: '✓';
+      font-size: 11px;
+      color: var(--accent2);
+      font-weight: 700;
+    }
+
+    .course-info { flex: 1; min-width: 0; }
+    .course-name {
+      font-size: 13px; font-weight: 500;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .course-name.done { color: var(--muted); text-decoration: line-through; }
+    .course-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .course-code { color: var(--accent); font-weight: 500; }
+
+    .course-grade {
+      font-size: 13px; font-weight: 600;
+      color: var(--accent2);
+      min-width: 32px; text-align: right;
+    }
+
+    /* ── Modal ───────────────────────────────── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.7);
+      z-index: 300;
+      display: flex; align-items: flex-end; justify-content: center;
+      padding: 0 0 0;
+      opacity: 0; pointer-events: none;
+      transition: opacity .2s;
+    }
+    @media (min-width: 500px) {
+      .modal-overlay { align-items: center; padding: 20px; }
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+    .modal-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px 16px 0 0;
+      padding: 24px 20px;
+      width: 100%;
+      transform: translateY(20px);
+      transition: transform .25s cubic-bezier(.4,0,.2,1);
+    }
+    @media (min-width: 500px) {
+      .modal-box {
+        border-radius: 16px;
+        max-width: 360px;
+        transform: translateY(0) scale(.96);
+      }
+    }
+    .modal-overlay.open .modal-box {
+      transform: translateY(0) scale(1);
+    }
+
+    .modal-course-code { font-size: 11px; color: var(--accent); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
+    .modal-course-name { font-size: 16px; font-weight: 600; margin: 4px 0 20px; letter-spacing: -.3px; }
+
+    .modal-label { font-size: 11px; color: var(--muted); margin-bottom: 6px; font-weight: 500; text-transform: uppercase; letter-spacing: .06em; }
+    .grade-input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 28px;
+      font-weight: 600;
+      text-align: center;
+      padding: 12px;
+      border-radius: 10px;
+      outline: none;
+      letter-spacing: -1px;
+      transition: border-color .15s;
+    }
+    .grade-input:focus { border-color: var(--accent); }
+    .grade-error { font-size: 12px; color: #f87171; margin-top: 8px; min-height: 16px; }
+
+    .modal-actions { display: flex; gap: 8px; margin-top: 20px; }
+    .btn {
+      flex: 1; padding: 11px;
+      border-radius: 8px;
+      font-family: var(--font);
+      font-size: 13px; font-weight: 600;
+      cursor: pointer; border: none;
+      transition: opacity .15s, background .15s;
+    }
+    .btn:hover { opacity: .85; }
+    .btn-ghost {
+      background: var(--border);
+      color: var(--text);
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    /* ── Empty / hidden ──────────────────────── */
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="header-left">
+    <span class="header-title">Pensum</span>
+    <span class="header-sub">Ing. de Software · UNICARIBE</span>
+  </div>
+  <button class="menu-btn" id="menuBtn">Ajustes</button>
+</header>
+
+<!-- Drawer -->
+<div class="drawer-overlay" id="drawerOverlay"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-header">
+    <h2>Ajustes</h2>
+    <button class="close-btn" id="closeDrawer">✕</button>
+  </div>
+
+  <div class="drawer-section">
+    <h3>Datos</h3>
+    <button class="drawer-item" onclick="exportProgress()">
+      <div class="drawer-item-icon icon-blue">↑</div>
+      <div>
+        <div>Exportar progreso</div>
+        <div style="font-size:11px;color:var(--muted);font-weight:400">Guarda tu avance en .json</div>
+      </div>
+    </button>
+    <label class="drawer-item" for="importFile">
+      <div class="drawer-item-icon icon-teal">↓</div>
+      <div>
+        <div>Importar progreso</div>
+        <div style="font-size:11px;color:var(--muted);font-weight:400">Carga un archivo previo</div>
+      </div>
+    </label>
+    <input type="file" id="importFile" accept=".json" class="hidden" onchange="importProgress(event)">
+  </div>
+
+  <div class="drawer-section">
+    <h3>Apoyo</h3>
+    <a href="https://www.paypal.com/donate?business=5ABMFQSKT6YUN&currency_code=USD" target="_blank" class="drawer-item">
+      <div class="drawer-item-icon icon-pink">♥</div>
+      <div>
+        <div>Donar</div>
+        <div style="font-size:11px;color:var(--muted);font-weight:400">Una monedita bb</div>
+      </div>
+    </a>
+  </div>
+
+  <div class="drawer-footer">© Juan.apk XD</div>
+</div>
+
+<!-- Main -->
+<main>
+
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Créditos</div>
+      <div class="stat-value"><span id="statCredits">0</span><span>/185</span></div>
+      <div class="stat-bar"><div class="stat-bar-fill" id="barCredits" style="width:0%"></div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Progreso</div>
+      <div class="stat-value"><span id="statProgress">0</span><span>%</span></div>
+      <div class="stat-bar"><div class="stat-bar-fill" id="barProgress" style="width:0%"></div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Materias</div>
+      <div class="stat-value"><span id="statCourses">0</span><span>/51</span></div>
+      <div class="stat-bar"><div class="stat-bar-fill teal" id="barCourses" style="width:0%"></div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">PGA</div>
+      <div class="stat-value" id="statPga">0.00</div>
+      <div class="stat-bar"><div class="stat-bar-fill teal" id="barPga" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <div class="search-wrap">
+      <span class="search-icon">⌕</span>
+      <input type="text" id="searchInput" placeholder="Buscar materia…">
+    </div>
+    <select id="filterSelect">
+      <option value="all">Todas</option>
+      <option value="completed">Completadas</option>
+      <option value="pending">Pendientes</option>
+    </select>
+  </div>
+
+  <!-- Quarters -->
+  <div id="quartersContainer"></div>
+
+</main>
+
+<!-- Grade Modal -->
+<div class="modal-overlay" id="gradeModal">
+  <div class="modal-box">
+    <div class="modal-course-code" id="modalCode"></div>
+    <div class="modal-course-name" id="modalName"></div>
+    <div class="modal-label">Calificación (0–100)</div>
+    <input type="number" class="grade-input" id="gradeInput" min="0" max="100" placeholder="—">
+    <div class="grade-error hidden" id="gradeError"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="submitGrade()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Data ────────────────────────────────────────────────
+const coursesData = {
+  quarters: [
+    { name: "Primer Cuatrimestre", courses: [
+      { code: "FGC-101", name: "Orientación Académica Institucional", credits: 2, prereq: "-" },
+      { code: "FGC-102", name: "Método del Trabajo Académico", credits: 2, prereq: "-" },
+      { code: "FGC-103", name: "Metodología de la Investigación", credits: 3, prereq: "-" },
+      { code: "ADE-101", name: "Administración I", credits: 3, prereq: "-" }
+    ]},
+    { name: "Segundo Cuatrimestre", courses: [
+      { code: "FGC-104", name: "Lengua Española I", credits: 3, prereq: "FGC-102" },
+      { code: "FGC-105", name: "Matemática Básica I", credits: 3, prereq: "FGC-102" },
+      { code: "FGC-106", name: "Tecnología de la Información y Comunicación I", credits: 3, prereq: "FGC-102" },
+      { code: "ING-101", name: "Introducción a la Ingeniería", credits: 3, prereq: "-" }
+    ]},
+    { name: "Tercer Cuatrimestre", courses: [
+      { code: "FGC-107", name: "Historia Social Dominicana", credits: 3, prereq: "FGC-102" },
+      { code: "FGC-108", name: "Inglés I", credits: 3, prereq: "FGC-102" },
+      { code: "DMF-209", name: "Física I", credits: 4, prereq: "FGC-105" },
+      { code: "INF-221", name: "Introducción a la Programación", credits: 3, prereq: "FGC-106" },
+      { code: "MTI-200", name: "Matemática II", credits: 4, prereq: "FGC-105" }
+    ]},
+    { name: "Cuarto Cuatrimestre", courses: [
+      { code: "FGC-109", name: "Filosofía", credits: 2, prereq: "FGC-102" },
+      { code: "FGC-110", name: "Desarrollo Sostenible y Gestión de Riesgos", credits: 2, prereq: "FGC-102" },
+      { code: "MTI-300", name: "Matemática III", credits: 4, prereq: "MTI-200" },
+      { code: "DMF-210", name: "Física II", credits: 4, prereq: "DMF-209" }
+    ]},
+    { name: "Quinto Cuatrimestre", courses: [
+      { code: "MAT-241", name: "Estadística I", credits: 3, prereq: "FGC-105" },
+      { code: "QUI-400", name: "Química I", credits: 3, prereq: "FGC-105" },
+      { code: "INF-215", name: "Ingeniería Económica", credits: 3, prereq: "MTI-200" },
+      { code: "ING-103", name: "Cálculo Integral", credits: 4, prereq: "MTI-300" }
+    ]},
+    { name: "Sexto Cuatrimestre", courses: [
+      { code: "MAT-242", name: "Estadística II", credits: 3, prereq: "MAT-241" },
+      { code: "ING-105", name: "Taller de Mecánica de Hardware", credits: 3, prereq: "FGC-106" },
+      { code: "ING-104", name: "Cálculo Vectorial", credits: 4, prereq: "ING-103" },
+      { code: "INF-222", name: "Sistema Operativo I", credits: 3, prereq: "FGC-106" },
+      { code: "ING-102", name: "Ciencia e Ingeniería de Materiales", credits: 4, prereq: "QUI-400" }
+    ]},
+    { name: "Séptimo Cuatrimestre", courses: [
+      { code: "TIC-408", name: "Seguridad de la Información", credits: 3, prereq: "FGC-106" },
+      { code: "ISW-301", name: "Taller de Programación I", credits: 5, prereq: "INF-221" },
+      { code: "INF-437", name: "Redes Informáticas", credits: 3, prereq: "INF-222" },
+      { code: "ISW-311", name: "Análisis y Diseño de Sistemas", credits: 4, prereq: "INF-221" }
+    ]},
+    { name: "Octavo Cuatrimestre", courses: [
+      { code: "ISW-221", name: "Estructura de Datos", credits: 4, prereq: "ISW-301" },
+      { code: "TIC-402", name: "Ética en Tecnología", credits: 2, prereq: "FGC-110" },
+      { code: "ISW-404", name: "Electiva I", credits: 3, prereq: "7mo. Cuat." },
+      { code: "ISW-321", name: "Taller de Bases de Datos I", credits: 4, prereq: "ISW-311" }
+    ]},
+    { name: "Noveno Cuatrimestre", courses: [
+      { code: "ISW-302", name: "Taller de Programación II", credits: 5, prereq: "ISW-301" },
+      { code: "ISW-312", name: "Ingeniería de Software I", credits: 4, prereq: "ISW-301" },
+      { code: "ISW-314", name: "Ingeniería de Requisitos y Modelado", credits: 4, prereq: "ISW-311" },
+      { code: "ISW-322", name: "Taller de Bases de Datos II", credits: 4, prereq: "ISW-321" },
+      { code: "ISW-324", name: "Sistemas de Información Geográfica", credits: 3, prereq: "ISW-321" }
+    ]},
+    { name: "Décimo Cuatrimestre", courses: [
+      { code: "ISW-313", name: "Ingeniería de Software II", credits: 4, prereq: "ISW-312" },
+      { code: "ISW-303", name: "Taller de Programación III", credits: 5, prereq: "ISW-302" },
+      { code: "ISW-405", name: "Electiva II", credits: 3, prereq: "9no. Cuat." },
+      { code: "ISW-401", name: "Proyecto de Software I", credits: 5, prereq: "ISW-312" },
+      { code: "ISW-403", name: "Pasantía – Práctica de Ing. de Software", credits: 8, prereq: "ISW-302" }
+    ]},
+    { name: "Undécimo Cuatrimestre", courses: [
+      { code: "ISW-304", name: "Taller de Programación IV", credits: 5, prereq: "ISW-303" },
+      { code: "ISW-305", name: "Diseño y Construcción de Interfaces", credits: 4, prereq: "ISW-302" },
+      { code: "ISW-402", name: "Proyecto de Software II", credits: 5, prereq: "ISW-401" },
+      { code: "FGC-111", name: "Seminario de Grado", credits: 3, prereq: "FGC-103" }
+    ]},
+    { name: "Duodécimo Cuatrimestre", courses: [
+      { code: "ISW-323", name: "Taller de Base de Datos III", credits: 4, prereq: "ISW-322" },
+      { code: "ISW-400", name: "Inteligencia Artificial", credits: 4, prereq: "ISW-303" },
+      { code: "ISW-600", name: "Proyecto Integrador de Software: Trabajo de Grado", credits: 6, prereq: "Todas" }
+    ]}
+  ]
+};
+
+// ── State ────────────────────────────────────────────────
+let completedCourses = new Map();
+try {
+  const saved = localStorage.getItem('completedCourses');
+  if (saved) completedCourses = new Map(JSON.parse(saved));
+} catch(e) {}
+
+let currentCode = null;
+
+// ── Helpers ──────────────────────────────────────────────
+function findCourse(code) {
+  for (const q of coursesData.quarters)
+    for (const c of q.courses)
+      if (c.code === code) return c;
+  return null;
+}
+
+function save() {
+  localStorage.setItem('completedCourses', JSON.stringify([...completedCourses]));
+}
+
+function calculatePGA() {
+  let pts = 0, cred = 0;
+  completedCourses.forEach((grade, code) => {
+    const c = findCourse(code);
+    if (c) { pts += grade * c.credits; cred += c.credits; }
+  });
+  return cred > 0 ? (pts / cred).toFixed(2) : '0.00';
+}
+
+// ── Stats ────────────────────────────────────────────────
+function updateStats() {
+  const keys = [...completedCourses.keys()];
+  const totalCred = keys.reduce((s, k) => {
+    const c = findCourse(k); return s + (c ? c.credits : 0);
+  }, 0);
+  const pct = Math.round((keys.length / 51) * 100);
+  const credPct = Math.round((totalCred / 185) * 100);
+  const pga = parseFloat(calculatePGA());
+
+  document.getElementById('statCredits').textContent = totalCred;
+  document.getElementById('statProgress').textContent = pct;
+  document.getElementById('statCourses').textContent = keys.length;
+  document.getElementById('statPga').textContent = pga.toFixed(2);
+
+  document.getElementById('barCredits').style.width = credPct + '%';
+  document.getElementById('barProgress').style.width = pct + '%';
+  document.getElementById('barCourses').style.width = Math.round((keys.length/51)*100) + '%';
+  document.getElementById('barPga').style.width = Math.min(100, Math.round((pga/100)*100)) + '%';
+}
+
+// ── Render ───────────────────────────────────────────────
+function renderQuarters() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const filter = document.getElementById('filterSelect').value;
+  const container = document.getElementById('quartersContainer');
+  container.innerHTML = '';
+
+  coursesData.quarters.forEach((quarter, qi) => {
+    const filtered = quarter.courses.filter(c => {
+      const done = completedCourses.has(c.code);
+      const matchSearch = c.name.toLowerCase().includes(search) || c.code.toLowerCase().includes(search);
+      const matchFilter = filter === 'all' || (filter === 'completed' && done) || (filter === 'pending' && !done);
+      return matchSearch && matchFilter;
+    });
+    if (filtered.length === 0) return;
+
+    const doneCount = filtered.filter(c => completedCourses.has(c.code)).length;
+    const pct = Math.round((doneCount / filtered.length) * 100);
+
+    const div = document.createElement('div');
+    div.className = 'quarter' + (qi < 2 ? ' open' : '');
+    div.innerHTML = `
+      <div class="quarter-header" onclick="this.parentElement.classList.toggle('open')">
+        <span class="quarter-title">${quarter.name}</span>
+        <div class="quarter-meta">
+          <span class="quarter-badge">${doneCount}/${filtered.length}</span>
+          <span style="font-size:11px;color:var(--muted)">${pct}%</span>
+          <span class="chevron">▾</span>
+        </div>
+      </div>
+      <div class="quarter-body">
+        ${filtered.map(c => {
+          const done = completedCourses.has(c.code);
+          const grade = completedCourses.get(c.code);
+          return `
+            <div class="course-row" onclick="toggleCourse('${c.code}')">
+              <div class="course-check ${done ? 'done' : ''}"></div>
+              <div class="course-info">
+                <div class="course-name ${done ? 'done' : ''}">${c.name}</div>
+                <div class="course-meta">
+                  <span class="course-code">${c.code}</span>
+                  &nbsp;·&nbsp;${c.credits} cr
+                  ${c.prereq !== '-' ? `&nbsp;·&nbsp;Pre: ${c.prereq}` : ''}
+                </div>
+              </div>
+              <div class="course-grade">${done ? grade.toFixed(1) : ''}</div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+// ── Toggle / Modal ───────────────────────────────────────
+function toggleCourse(code) {
+  if (completedCourses.has(code)) {
+    if (confirm('¿Quitar esta materia de completadas?')) {
+      completedCourses.delete(code);
+      save(); updateStats(); renderQuarters();
+    }
+  } else {
+    const c = findCourse(code);
+    if (c) openModal(c);
+  }
+}
+
+function openModal(c) {
+  currentCode = c.code;
+  document.getElementById('modalCode').textContent = c.code;
+  document.getElementById('modalName').textContent = c.name;
+  document.getElementById('gradeInput').value = '';
+  document.getElementById('gradeError').textContent = '';
+  document.getElementById('gradeError').classList.add('hidden');
+  document.getElementById('gradeModal').classList.add('open');
+  setTimeout(() => document.getElementById('gradeInput').focus(), 100);
+}
+
+function closeModal() {
+  document.getElementById('gradeModal').classList.remove('open');
+  currentCode = null;
+}
+
+function submitGrade() {
+  const val = document.getElementById('gradeInput').value;
+  const err = document.getElementById('gradeError');
+  const g = parseFloat(val);
+  if (!val || isNaN(g) || g < 0 || g > 100) {
+    err.textContent = 'Ingresa una calificación entre 0 y 100.';
+    err.classList.remove('hidden');
+    return;
+  }
+  completedCourses.set(currentCode, g);
+  save(); updateStats(); renderQuarters();
+  closeModal();
+}
+
+// ── Drawer ───────────────────────────────────────────────
+const drawer = document.getElementById('drawer');
+const overlay = document.getElementById('drawerOverlay');
+document.getElementById('menuBtn').addEventListener('click', () => {
+  drawer.classList.add('open'); overlay.classList.add('open');
+});
+function closeDrawer() {
+  drawer.classList.remove('open'); overlay.classList.remove('open');
+}
+document.getElementById('closeDrawer').addEventListener('click', closeDrawer);
+overlay.addEventListener('click', closeDrawer);
+
+// ── Import / Export ──────────────────────────────────────
+function exportProgress() {
+  const data = { completedCourses: [...completedCourses.entries()], date: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `pensum_${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function importProgress(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (!data.completedCourses) throw new Error();
+      if (confirm('¿Reemplazar tu progreso actual con este archivo?')) {
+        completedCourses = new Map(data.completedCourses);
+        save(); updateStats(); renderQuarters();
+        closeDrawer();
+      }
+    } catch { alert('Archivo inválido.'); }
+  };
+  reader.readAsText(file);
+}
+
+// ── Events ───────────────────────────────────────────────
+document.getElementById('searchInput').addEventListener('input', renderQuarters);
+document.getElementById('filterSelect').addEventListener('change', renderQuarters);
+document.getElementById('gradeInput').addEventListener('keydown', e => { if (e.key === 'Enter') submitGrade(); });
+document.getElementById('gradeModal').addEventListener('click', e => { if (e.target.id === 'gradeModal') closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+// ── Init ─────────────────────────────────────────────────
+updateStats();
+renderQuarters();
+</script>
+</body>
+</html>
