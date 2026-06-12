@@ -296,12 +296,11 @@
 
 <!-- Firebase SDKs -->
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { initializeApp }   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, enableNetwork,
-         initializeFirestore, persistentLocalCache, persistentMultipleTabManager }
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getDatabase, ref, set, get }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 // ── Firebase config ───────────────────────────────────────
 const firebaseConfig = {
@@ -315,10 +314,7 @@ const firebaseConfig = {
 };
 const app      = initializeApp(firebaseConfig);
 const auth     = getAuth(app);
-// Use persistent cache so it works offline and reconnects automatically
-const db = initializeFirestore(app, {
-  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
-});
+const db       = getDatabase(app);
 const provider = new GoogleAuthProvider();
 
 // ── Course data ───────────────────────────────────────────
@@ -605,18 +601,17 @@ function autoSave(){
   clearTimeout(autoSaveTimer);
   autoSaveTimer = setTimeout(async ()=>{
     try {
-      await setDoc(doc(db,'progress',currentUser.uid),{
+      await set(ref(db, 'progress/'+currentUser.uid), {
         completedCourses: mapToObj(completedCourses),
         savedAt: new Date().toISOString(),
         displayName: currentUser.displayName
       });
-      // Show a subtle indicator
-      const el = document.getElementById('syncStatus');
+      const el=document.getElementById('syncStatus');
       el.className='sync-status show ok';
       el.innerHTML='✓ Guardado automáticamente';
-      setTimeout(()=>el.classList.remove('show'), 2500);
-    } catch(e){ console.warn('Auto-save failed:', e.message); }
-  }, 1500); // wait 1.5s after last change before saving
+      setTimeout(()=>el.classList.remove('show'),2500);
+    } catch(e){ console.warn('Auto-save failed:',e.message); }
+  }, 1500);
 }
 
 window.submitGrade = function(){
@@ -661,7 +656,7 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
-// ── Firestore sync ────────────────────────────────────────
+// ── Realtime Database sync ────────────────────────────────
 function showSyncMsg(type, msg, duration=4000){
   const el=document.getElementById('syncStatus');
   el.className='sync-status show '+type;
@@ -669,16 +664,15 @@ function showSyncMsg(type, msg, duration=4000){
   if(duration>0) setTimeout(()=>el.classList.remove('show'),duration);
 }
 
-// Convert Map → plain object (Firestore doesn't support nested arrays)
 function mapToObj(m){ const o={}; m.forEach((v,k)=>{ o[k]=v; }); return o; }
-function objToMap(o){ const m=new Map(); Object.entries(o).forEach(([k,v])=>m.set(k,v)); return m; }
+function objToMap(o){ const m=new Map(); Object.entries(o).forEach(([k,v])=>m.set(k,parseFloat(v))); return m; }
 
 window.uploadToFirebase = async function(){
   if(!currentUser){ showSyncMsg('err','Inicia sesión primero'); return; }
   document.getElementById('btnUpload').disabled=true;
   showSyncMsg('info','Guardando en la nube…',0);
   try {
-    await setDoc(doc(db,'progress',currentUser.uid),{
+    await set(ref(db, 'progress/'+currentUser.uid), {
       completedCourses: mapToObj(completedCourses),
       savedAt: new Date().toISOString(),
       displayName: currentUser.displayName
@@ -688,32 +682,28 @@ window.uploadToFirebase = async function(){
   document.getElementById('btnUpload').disabled=false;
 };
 
-window.loadFromFirebase = async function(silent=false, attempt=1){
+window.loadFromFirebase = async function(silent=false){
   if(!currentUser){ if(!silent) showSyncMsg('err','Inicia sesión primero'); return; }
   if(!silent) document.getElementById('btnDownload').disabled=true;
-  showSyncMsg('info', attempt>1 ? `Reintentando (${attempt}/3)…` : 'Cargando desde la nube…', 0);
+  showSyncMsg('info','Cargando desde la nube…',0);
   try {
-    await enableNetwork(db);
-    const snap = await getDoc(doc(db,'progress',currentUser.uid));
+    const snap = await get(ref(db, 'progress/'+currentUser.uid));
     if(!snap.exists()){
       showSyncMsg('ok','Sin datos en la nube aún — ¡empieza marcando materias!');
       if(!silent) document.getElementById('btnDownload').disabled=false;
       return;
     }
-    const data = snap.data();
+    const data    = snap.val();
     const incoming = objToMap(data.completedCourses);
     const inCount  = incoming.size;
     const locCount = completedCourses.size;
 
     if(silent){
-      if(locCount===0 || inCount > locCount){
-        completedCourses=incoming; saveLocal(); updateStats(); renderQuarters();
-        showSyncMsg('ok',`✓ ${inCount} materias cargadas`);
-      } else {
-        showSyncMsg('ok',`✓ Local (${locCount}) al día`);
-      }
+      // Auto-load: siempre carga de la nube si tiene datos
+      completedCourses=incoming; saveLocal(); updateStats(); renderQuarters();
+      showSyncMsg('ok',`✓ ${inCount} materias cargadas desde la nube`);
     } else {
-      const d = new Date(data.savedAt);
+      const d  = new Date(data.savedAt);
       const ds = d.toLocaleDateString('es',{day:'numeric',month:'short',year:'numeric'});
       if(confirm(`La nube tiene ${inCount} materias (${ds}).\n¿Reemplazar tu progreso local?`)){
         completedCourses=incoming; saveLocal(); updateStats(); renderQuarters();
@@ -722,12 +712,7 @@ window.loadFromFirebase = async function(silent=false, attempt=1){
       } else { document.getElementById('syncStatus').classList.remove('show'); }
     }
   } catch(e){
-    // Retry up to 3 times with increasing delay
-    if(attempt < 3){
-      setTimeout(()=> window.loadFromFirebase(silent, attempt+1), attempt * 2000);
-    } else {
-      showSyncMsg('err','✗ Sin conexión. Verifica tu internet e intenta de nuevo.');
-    }
+    showSyncMsg('err','✗ Error al cargar: '+e.message);
   }
   if(!silent) document.getElementById('btnDownload').disabled=false;
 };
