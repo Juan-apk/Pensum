@@ -5,375 +5,230 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pensum · Ing. Software</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <!-- Google Identity Services -->
+  <script src="https://accounts.google.com/gsi/client" async></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --bg:       #0f0f11;
-      --surface:  #18181c;
-      --border:   #2a2a30;
-      --text:     #e8e8ec;
-      --muted:    #6b6b78;
-      --accent:   #7c6ef7;
-      --accent2:  #5eead4;
-      --done-bg:  #1a2420;
-      --done-txt: #5eead4;
-      --radius:   12px;
-      --font: 'Inter', system-ui, sans-serif;
+      --bg:      #0f0f11;
+      --surface: #18181c;
+      --border:  #2a2a30;
+      --text:    #e8e8ec;
+      --muted:   #6b6b78;
+      --accent:  #7c6ef7;
+      --accent2: #5eead4;
+      --radius:  12px;
+      --font:    'Inter', system-ui, sans-serif;
     }
+    body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100dvh; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
 
-    body {
-      font-family: var(--font);
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100dvh;
-      -webkit-font-smoothing: antialiased;
-    }
-
-    /* ── Header ─────────────────────────────── */
+    /* ── Header ── */
     header {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      background: var(--bg);
-      border-bottom: 1px solid var(--border);
-      padding: 14px 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+      background: var(--bg); border-bottom: 1px solid var(--border);
+      padding: 14px 20px; display: flex; align-items: center; justify-content: space-between;
+      transition: border-color .3s, box-shadow .3s;
     }
+    header.glow { border-bottom-color: var(--accent2); box-shadow: 0 1px 20px rgba(94,234,212,.12); }
     .header-left { display: flex; flex-direction: column; gap: 1px; }
-    .header-title { font-size: 15px; font-weight: 600; letter-spacing: -0.3px; }
-    .header-sub   { font-size: 11px; color: var(--muted); }
+    .header-title { font-size: 15px; font-weight: 600; letter-spacing: -.3px; }
+    .header-sub   { font-size: 11px; color: var(--muted); transition: color .3s; }
+    .header-sub.fire { color: var(--accent2); }
     .menu-btn {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      color: var(--text);
-      border-radius: 8px;
-      padding: 8px 14px;
-      font-size: 13px;
-      font-family: var(--font);
-      cursor: pointer;
-      transition: background .15s;
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); border-radius: 8px; padding: 8px 14px;
+      font-size: 13px; font-family: var(--font); cursor: pointer; transition: background .15s;
     }
     .menu-btn:hover { background: var(--border); }
 
-    /* ── Drawer ──────────────────────────────── */
-    .drawer-overlay {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,.6);
-      z-index: 200;
-      opacity: 0; pointer-events: none;
-      transition: opacity .2s;
+    /* ── Confetti ── */
+    #confettiCanvas { position: fixed; inset: 0; pointer-events: none; z-index: 9999; opacity: 0; transition: opacity .5s; }
+    #confettiCanvas.active { opacity: 1; }
+    #celebBanner {
+      position: fixed; top: 70px; left: 50%; transform: translateX(-50%) translateY(-20px);
+      background: linear-gradient(135deg,#1a2420,#1a1a2e); border: 1px solid var(--accent2);
+      border-radius: 12px; padding: 12px 20px; font-size: 13px; font-weight: 600;
+      color: var(--accent2); z-index: 500; white-space: nowrap;
+      box-shadow: 0 4px 30px rgba(94,234,212,.25);
+      opacity: 0; transition: opacity .4s, transform .4s; pointer-events: none;
     }
-    .drawer-overlay.open { opacity: 1; pointer-events: all; }
+    #celebBanner.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+    /* ── Drawer ── */
+    .drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 200; opacity: 0; pointer-events: none; transition: opacity .2s; }
+    .drawer-overlay.open { opacity: 1; pointer-events: all; }
     .drawer {
-      position: fixed;
-      top: 0; right: 0;
-      height: 100%;
-      width: min(300px, 85vw);
-      background: var(--surface);
-      border-left: 1px solid var(--border);
-      z-index: 201;
-      transform: translateX(100%);
-      transition: transform .25s cubic-bezier(.4,0,.2,1);
-      display: flex; flex-direction: column;
-      padding: 24px 20px;
-      gap: 24px;
+      position: fixed; top: 0; right: 0; height: 100%; width: min(300px,85vw);
+      background: var(--surface); border-left: 1px solid var(--border); z-index: 201;
+      transform: translateX(100%); transition: transform .25s cubic-bezier(.4,0,.2,1);
+      display: flex; flex-direction: column; padding: 24px 20px; gap: 20px; overflow-y: auto;
     }
     .drawer.open { transform: translateX(0); }
-
-    .drawer-header {
-      display: flex; align-items: center; justify-content: space-between;
-    }
+    .drawer-header { display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
     .drawer-header h2 { font-size: 15px; font-weight: 600; }
-    .close-btn {
-      background: none; border: none; color: var(--muted);
-      font-size: 20px; cursor: pointer; line-height: 1;
-      padding: 2px 6px; border-radius: 6px;
-      transition: color .15s, background .15s;
-    }
+    .close-btn { background: none; border: none; color: var(--muted); font-size: 20px; cursor: pointer; padding: 2px 6px; border-radius: 6px; transition: color .15s, background .15s; }
     .close-btn:hover { color: var(--text); background: var(--border); }
-
-    .drawer-section h3 {
-      font-size: 11px; font-weight: 500; color: var(--muted);
-      text-transform: uppercase; letter-spacing: .08em;
-      margin-bottom: 10px;
-    }
+    .drawer-section h3 { font-size: 11px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 10px; }
     .drawer-item {
-      display: flex; align-items: center; gap: 12px;
-      padding: 10px 12px;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background .15s;
-      color: var(--text); text-decoration: none;
-      font-size: 13px; font-weight: 500;
-      border: none; background: none; width: 100%; text-align: left;
-      font-family: var(--font);
+      display: flex; align-items: center; gap: 12px; padding: 10px 12px;
+      border-radius: 8px; cursor: pointer; transition: background .15s;
+      color: var(--text); text-decoration: none; font-size: 13px; font-weight: 500;
+      border: none; background: none; width: 100%; text-align: left; font-family: var(--font);
     }
     .drawer-item:hover { background: var(--border); }
-    .drawer-item-icon {
-      width: 32px; height: 32px;
-      border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 15px; flex-shrink: 0;
-    }
-    .icon-blue { background: rgba(124,110,247,.15); }
-    .icon-teal { background: rgba(94,234,212,.15); }
-    .icon-pink { background: rgba(244,114,182,.15); }
+    .drawer-item:disabled { opacity: .4; cursor: not-allowed; }
+    .drawer-item-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+    .icon-blue  { background: rgba(124,110,247,.15); }
+    .icon-teal  { background: rgba(94,234,212,.15); }
+    .icon-green { background: rgba(74,222,128,.15); }
+    .icon-pink  { background: rgba(244,114,182,.15); }
+    .icon-red   { background: rgba(248,113,113,.15); }
+    .drawer-footer { margin-top: auto; font-size: 11px; color: var(--muted); text-align: center; flex-shrink: 0; }
 
-    .drawer-footer {
-      margin-top: auto;
-      font-size: 11px; color: var(--muted); text-align: center;
+    /* ── Google Account Card ── */
+    .google-card {
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 10px; padding: 14px; transition: border-color .3s;
     }
+    .google-card.connected { border-color: rgba(94,234,212,.3); }
 
-    /* ── Main ────────────────────────────────── */
+    /* Sign-in state */
+    .signin-area { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+    .google-signin-btn {
+      display: flex; align-items: center; gap: 10px;
+      background: #fff; color: #3c4043; border: 1px solid #dadce0;
+      border-radius: 8px; padding: 9px 14px; font-family: var(--font);
+      font-size: 13px; font-weight: 500; cursor: pointer; width: 100%;
+      transition: box-shadow .15s, background .15s;
+    }
+    .google-signin-btn:hover { box-shadow: 0 1px 6px rgba(0,0,0,.2); background: #f8f9fa; }
+    .google-logo { width: 18px; height: 18px; flex-shrink: 0; }
+    .signin-hint { font-size: 11px; color: var(--muted); line-height: 1.4; }
+
+    /* Signed-in state */
+    .user-row { display: flex; align-items: center; gap: 10px; }
+    .user-avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: var(--accent); color: #fff; font-size: 14px; font-weight: 600;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden;
+    }
+    .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .user-info { flex: 1; min-width: 0; }
+    .user-name  { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .user-email { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sync-row { display: flex; gap: 6px; margin-top: 10px; }
+    .sync-btn {
+      flex: 1; padding: 8px 10px; border-radius: 7px; font-family: var(--font);
+      font-size: 12px; font-weight: 600; cursor: pointer; border: none;
+      transition: opacity .15s; display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .sync-btn:hover { opacity: .85; }
+    .sync-btn:disabled { opacity: .4; cursor: not-allowed; }
+    .sync-btn.upload { background: var(--accent); color: #fff; }
+    .sync-btn.download { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+    .sync-btn.signout  { background: var(--surface); color: #f87171; border: 1px solid rgba(248,113,113,.3); }
+
+    /* Sync status */
+    .sync-status {
+      font-size: 11px; margin-top: 8px; padding: 6px 10px; border-radius: 6px;
+      display: none; align-items: center; gap: 6px;
+    }
+    .sync-status.show { display: flex; }
+    .sync-status.ok   { background: rgba(94,234,212,.1); color: var(--accent2); }
+    .sync-status.err  { background: rgba(248,113,113,.1); color: #f87171; }
+    .sync-status.info { background: rgba(124,110,247,.1); color: var(--accent); }
+    .spin-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: pulse 1s infinite; flex-shrink: 0; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.2} }
+
+    /* ── Main ── */
     main { padding: 20px; max-width: 720px; margin: 0 auto; }
 
-    /* ── Stats ───────────────────────────────── */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-    @media (min-width: 500px) {
-      .stats-grid { grid-template-columns: repeat(4, 1fr); }
-    }
-    .stat-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 14px;
-    }
-    .stat-label {
-      font-size: 10px; font-weight: 500; color: var(--muted);
-      text-transform: uppercase; letter-spacing: .06em;
-      margin-bottom: 6px;
-    }
-    .stat-value {
-      font-size: 22px; font-weight: 600; letter-spacing: -1px;
-      line-height: 1;
-    }
+    /* ── Stats ── */
+    .stats-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; margin-bottom: 20px; }
+    @media (min-width:500px) { .stats-grid { grid-template-columns: repeat(4,1fr); } }
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; transition: border-color .4s, box-shadow .4s; }
+    .stat-card.glowing { border-color: rgba(94,234,212,.4); box-shadow: 0 0 20px rgba(94,234,212,.08); }
+    .stat-label { font-size: 10px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+    .stat-value { font-size: 22px; font-weight: 600; letter-spacing: -1px; line-height: 1; }
     .stat-value span { font-size: 13px; font-weight: 400; color: var(--muted); }
-    .stat-bar {
-      margin-top: 10px;
-      height: 2px; background: var(--border); border-radius: 99px;
-      overflow: hidden;
-    }
-    .stat-bar-fill {
-      height: 100%; border-radius: 99px;
-      background: var(--accent);
-      transition: width .5s cubic-bezier(.4,0,.2,1);
-    }
+    .stat-bar { margin-top: 10px; height: 2px; background: var(--border); border-radius: 99px; overflow: hidden; }
+    .stat-bar-fill { height: 100%; border-radius: 99px; background: var(--accent); transition: width .6s cubic-bezier(.4,0,.2,1); }
     .stat-bar-fill.teal { background: var(--accent2); }
+    .stat-bar-fill.fire { background: linear-gradient(90deg,var(--accent),var(--accent2)); animation: shimmer 2s linear infinite; background-size: 200% 100%; }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 
-    /* ── Search / Filter ─────────────────────── */
-    .controls {
-      display: flex; gap: 8px;
-      margin-bottom: 20px;
-    }
+    /* ── Controls ── */
+    .controls { display: flex; gap: 8px; margin-bottom: 20px; }
     .search-wrap { position: relative; flex: 1; }
-    .search-icon {
-      position: absolute; left: 12px; top: 50%;
-      transform: translateY(-50%);
-      font-size: 13px; color: var(--muted); pointer-events: none;
-    }
-    input[type="text"], select {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      color: var(--text);
-      border-radius: 8px;
-      font-family: var(--font);
-      font-size: 13px;
-      padding: 9px 12px;
-      outline: none;
-      transition: border-color .15s;
-    }
+    .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 13px; color: var(--muted); pointer-events: none; }
+    input[type="text"], select { background: var(--surface); border: 1px solid var(--border); color: var(--text); border-radius: 8px; font-family: var(--font); font-size: 13px; padding: 9px 12px; outline: none; transition: border-color .15s; }
     input[type="text"] { padding-left: 34px; width: 100%; }
     input[type="text"]:focus, select:focus { border-color: var(--accent); }
-    select { color: var(--text); cursor: pointer; }
-    select option { background: var(--surface); }
+    select { cursor: pointer; } select option { background: var(--surface); }
 
-    /* ── Quarter ─────────────────────────────── */
-    .quarter {
-      margin-bottom: 12px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      overflow: hidden;
-    }
-    .quarter-header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 14px 16px;
-      cursor: pointer;
-      user-select: none;
-      transition: background .15s;
-    }
+    /* ── Quarter ── */
+    .quarter { margin-bottom: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; transition: border-color .4s; }
+    .quarter.complete { border-color: rgba(94,234,212,.3); }
+    .quarter-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; cursor: pointer; user-select: none; transition: background .15s; }
     .quarter-header:hover { background: rgba(255,255,255,.03); }
     .quarter-title { font-size: 13px; font-weight: 600; }
     .quarter-meta { display: flex; align-items: center; gap: 10px; }
-    .quarter-badge {
-      font-size: 11px; color: var(--muted);
-      background: var(--border);
-      padding: 2px 8px; border-radius: 99px;
-    }
-    .quarter-progress-ring { flex-shrink: 0; }
-    .chevron {
-      color: var(--muted); font-size: 11px;
-      transition: transform .2s;
-      margin-left: 8px;
-    }
+    .quarter-badge { font-size: 11px; color: var(--muted); background: var(--border); padding: 2px 8px; border-radius: 99px; }
+    .quarter-badge.done { background: rgba(94,234,212,.15); color: var(--accent2); }
+    .chevron { color: var(--muted); font-size: 11px; transition: transform .2s; margin-left: 8px; }
     .quarter.open .chevron { transform: rotate(180deg); }
-
-    .quarter-body {
-      display: none;
-      padding: 0 12px 12px;
-      border-top: 1px solid var(--border);
-    }
+    .quarter-body { display: none; padding: 0 12px 12px; border-top: 1px solid var(--border); }
     .quarter.open .quarter-body { display: block; }
 
-    /* ── Course row ──────────────────────────── */
-    .course-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 10px 4px;
-      border-bottom: 1px solid rgba(255,255,255,.04);
-      cursor: pointer;
-      border-radius: 6px;
-      transition: background .12s;
-    }
+    /* ── Course row ── */
+    .course-row { display: flex; align-items: center; gap: 12px; padding: 10px 4px; border-bottom: 1px solid rgba(255,255,255,.04); cursor: pointer; border-radius: 6px; transition: background .12s; }
     .course-row:last-child { border-bottom: none; }
     .course-row:hover { background: rgba(255,255,255,.04); }
-
-    .course-check {
-      width: 20px; height: 20px;
-      border-radius: 6px;
-      border: 1.5px solid var(--border);
-      flex-shrink: 0;
-      display: flex; align-items: center; justify-content: center;
-      transition: all .15s;
-    }
-    .course-check.done {
-      border-color: var(--accent2);
-      background: rgba(94,234,212,.15);
-    }
-    .course-check.done::after {
-      content: '✓';
-      font-size: 11px;
-      color: var(--accent2);
-      font-weight: 700;
-    }
-
+    .course-check { width: 20px; height: 20px; border-radius: 6px; border: 1.5px solid var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all .15s; }
+    .course-check.done { border-color: var(--accent2); background: rgba(94,234,212,.15); }
+    .course-check.done::after { content: '✓'; font-size: 11px; color: var(--accent2); font-weight: 700; }
     .course-info { flex: 1; min-width: 0; }
-    .course-name {
-      font-size: 13px; font-weight: 500;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
+    .course-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .course-name.done { color: var(--muted); text-decoration: line-through; }
     .course-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
     .course-code { color: var(--accent); font-weight: 500; }
+    .course-grade { font-size: 13px; font-weight: 600; color: var(--accent2); min-width: 32px; text-align: right; }
 
-    .course-grade {
-      font-size: 13px; font-weight: 600;
-      color: var(--accent2);
-      min-width: 32px; text-align: right;
-    }
-
-    /* ── Modal ───────────────────────────────── */
-    .modal-overlay {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,.7);
-      z-index: 300;
-      display: flex; align-items: flex-end; justify-content: center;
-      padding: 0 0 0;
-      opacity: 0; pointer-events: none;
-      transition: opacity .2s;
-    }
-    @media (min-width: 500px) {
-      .modal-overlay { align-items: center; padding: 20px; }
-    }
+    /* ── Grade Modal ── */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 300; display: flex; align-items: flex-end; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .2s; }
+    @media (min-width:500px) { .modal-overlay { align-items: center; padding: 20px; } }
     .modal-overlay.open { opacity: 1; pointer-events: all; }
-
-    .modal-box {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px 16px 0 0;
-      padding: 24px 20px;
-      width: 100%;
-      transform: translateY(20px);
-      transition: transform .25s cubic-bezier(.4,0,.2,1);
-    }
-    @media (min-width: 500px) {
-      .modal-box {
-        border-radius: 16px;
-        max-width: 360px;
-        transform: translateY(0) scale(.96);
-      }
-    }
-    .modal-overlay.open .modal-box {
-      transform: translateY(0) scale(1);
-    }
-
+    .modal-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px 16px 0 0; padding: 24px 20px; width: 100%; transform: translateY(20px); transition: transform .25s cubic-bezier(.4,0,.2,1); }
+    @media (min-width:500px) { .modal-box { border-radius: 16px; max-width: 360px; transform: scale(.96); } }
+    .modal-overlay.open .modal-box { transform: translateY(0) scale(1); }
     .modal-course-code { font-size: 11px; color: var(--accent); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
     .modal-course-name { font-size: 16px; font-weight: 600; margin: 4px 0 20px; letter-spacing: -.3px; }
-
     .modal-label { font-size: 11px; color: var(--muted); margin-bottom: 6px; font-weight: 500; text-transform: uppercase; letter-spacing: .06em; }
-    .grade-input {
-      width: 100%;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      color: var(--text);
-      font-family: var(--font);
-      font-size: 28px;
-      font-weight: 600;
-      text-align: center;
-      padding: 12px;
-      border-radius: 10px;
-      outline: none;
-      letter-spacing: -1px;
-      transition: border-color .15s;
-    }
+    .grade-input { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); font-family: var(--font); font-size: 28px; font-weight: 600; text-align: center; padding: 12px; border-radius: 10px; outline: none; letter-spacing: -1px; transition: border-color .15s; }
     .grade-input:focus { border-color: var(--accent); }
     .grade-error { font-size: 12px; color: #f87171; margin-top: 8px; min-height: 16px; }
-
     .modal-actions { display: flex; gap: 8px; margin-top: 20px; }
-    .btn {
-      flex: 1; padding: 11px;
-      border-radius: 8px;
-      font-family: var(--font);
-      font-size: 13px; font-weight: 600;
-      cursor: pointer; border: none;
-      transition: opacity .15s, background .15s;
-    }
+    .btn { flex: 1; padding: 11px; border-radius: 8px; font-family: var(--font); font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: opacity .15s; }
     .btn:hover { opacity: .85; }
-    .btn-ghost {
-      background: var(--border);
-      color: var(--text);
-    }
-    .btn-primary {
-      background: var(--accent);
-      color: #fff;
-    }
+    .btn-ghost   { background: var(--border); color: var(--text); }
+    .btn-primary { background: var(--accent); color: #fff; }
 
-    /* ── Empty / hidden ──────────────────────── */
     .hidden { display: none !important; }
   </style>
 </head>
 <body>
 
-<!-- Header -->
-<header>
+<canvas id="confettiCanvas"></canvas>
+<div id="celebBanner">🎉 ¡Ya estás en la recta final!</div>
+
+<header id="mainHeader">
   <div class="header-left">
     <span class="header-title">Pensum</span>
-    <span class="header-sub">Ing. de Software · UNICARIBE</span>
+    <span class="header-sub" id="headerSub">Ing. de Software · UNICARIBE</span>
   </div>
   <button class="menu-btn" id="menuBtn">Ajustes</button>
 </header>
 
-<!-- Drawer -->
 <div class="drawer-overlay" id="drawerOverlay"></div>
 <div class="drawer" id="drawer">
   <div class="drawer-header">
@@ -381,20 +236,66 @@
     <button class="close-btn" id="closeDrawer">✕</button>
   </div>
 
+  <!-- ── Google Account section ── -->
   <div class="drawer-section">
-    <h3>Datos</h3>
+    <h3>Cuenta Google</h3>
+    <div class="google-card" id="googleCard">
+
+      <!-- Not signed in -->
+      <div id="signedOutView" class="signin-area">
+        <button class="google-signin-btn" id="googleSignInBtn" onclick="handleSignIn()">
+          <svg class="google-logo" viewBox="0 0 48 48">
+            <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+            <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+            <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+            <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.35-8.16 2.35-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+          </svg>
+          Iniciar sesión con Google
+        </button>
+        <p class="signin-hint">Inicia sesión para sincronizar tu progreso en todos tus dispositivos.</p>
+      </div>
+
+      <!-- Signed in -->
+      <div id="signedInView" class="hidden">
+        <div class="user-row">
+          <div class="user-avatar" id="userAvatar">J</div>
+          <div class="user-info">
+            <div class="user-name" id="userName">—</div>
+            <div class="user-email" id="userEmail">—</div>
+          </div>
+        </div>
+        <div class="sync-row">
+          <button class="sync-btn upload" onclick="uploadToDrive()" id="btnUpload">
+            ↑ Guardar
+          </button>
+          <button class="sync-btn download" onclick="downloadFromDrive()" id="btnDownload">
+            ↓ Cargar
+          </button>
+          <button class="sync-btn signout" onclick="handleSignOut()" title="Cerrar sesión">
+            ✕
+          </button>
+        </div>
+        <div class="sync-status" id="syncStatus"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Local backup ── -->
+  <div class="drawer-section">
+    <h3>Respaldo local</h3>
     <button class="drawer-item" onclick="exportProgress()">
       <div class="drawer-item-icon icon-blue">↑</div>
       <div>
-        <div>Exportar progreso</div>
-        <div style="font-size:11px;color:var(--muted);font-weight:400">Guarda tu avance en .json</div>
+        <div>Exportar .json</div>
+        <div style="font-size:11px;color:var(--muted);font-weight:400">Descarga una copia</div>
       </div>
     </button>
     <label class="drawer-item" for="importFile">
-      <div class="drawer-item-icon icon-teal">↓</div>
+      <div class="drawer-item-icon icon-blue">↓</div>
       <div>
-        <div>Importar progreso</div>
-        <div style="font-size:11px;color:var(--muted);font-weight:400">Carga un archivo previo</div>
+        <div>Importar .json</div>
+        <div style="font-size:11px;color:var(--muted);font-weight:400">Restaurar desde archivo</div>
       </div>
     </label>
     <input type="file" id="importFile" accept=".json" class="hidden" onchange="importProgress(event)">
@@ -416,32 +317,29 @@
 
 <!-- Main -->
 <main>
-
-  <!-- Stats -->
   <div class="stats-grid">
-    <div class="stat-card">
+    <div class="stat-card" id="cardCredits">
       <div class="stat-label">Créditos</div>
       <div class="stat-value"><span id="statCredits">0</span><span>/185</span></div>
       <div class="stat-bar"><div class="stat-bar-fill" id="barCredits" style="width:0%"></div></div>
     </div>
-    <div class="stat-card">
+    <div class="stat-card" id="cardProgress">
       <div class="stat-label">Progreso</div>
       <div class="stat-value"><span id="statProgress">0</span><span>%</span></div>
       <div class="stat-bar"><div class="stat-bar-fill" id="barProgress" style="width:0%"></div></div>
     </div>
-    <div class="stat-card">
+    <div class="stat-card" id="cardCourses">
       <div class="stat-label">Materias</div>
       <div class="stat-value"><span id="statCourses">0</span><span>/51</span></div>
       <div class="stat-bar"><div class="stat-bar-fill teal" id="barCourses" style="width:0%"></div></div>
     </div>
-    <div class="stat-card">
+    <div class="stat-card" id="cardPga">
       <div class="stat-label">PGA</div>
       <div class="stat-value" id="statPga">0.00</div>
       <div class="stat-bar"><div class="stat-bar-fill teal" id="barPga" style="width:0%"></div></div>
     </div>
   </div>
 
-  <!-- Controls -->
   <div class="controls">
     <div class="search-wrap">
       <span class="search-icon">⌕</span>
@@ -454,9 +352,7 @@
     </select>
   </div>
 
-  <!-- Quarters -->
   <div id="quartersContainer"></div>
-
 </main>
 
 <!-- Grade Modal -->
@@ -475,285 +371,480 @@
 </div>
 
 <script>
-// ── Data ────────────────────────────────────────────────
-const coursesData = {
-  quarters: [
-    { name: "Primer Cuatrimestre", courses: [
-      { code: "FGC-101", name: "Orientación Académica Institucional", credits: 2, prereq: "-" },
-      { code: "FGC-102", name: "Método del Trabajo Académico", credits: 2, prereq: "-" },
-      { code: "FGC-103", name: "Metodología de la Investigación", credits: 3, prereq: "-" },
-      { code: "ADE-101", name: "Administración I", credits: 3, prereq: "-" }
-    ]},
-    { name: "Segundo Cuatrimestre", courses: [
-      { code: "FGC-104", name: "Lengua Española I", credits: 3, prereq: "FGC-102" },
-      { code: "FGC-105", name: "Matemática Básica I", credits: 3, prereq: "FGC-102" },
-      { code: "FGC-106", name: "Tecnología de la Información y Comunicación I", credits: 3, prereq: "FGC-102" },
-      { code: "ING-101", name: "Introducción a la Ingeniería", credits: 3, prereq: "-" }
-    ]},
-    { name: "Tercer Cuatrimestre", courses: [
-      { code: "FGC-107", name: "Historia Social Dominicana", credits: 3, prereq: "FGC-102" },
-      { code: "FGC-108", name: "Inglés I", credits: 3, prereq: "FGC-102" },
-      { code: "DMF-209", name: "Física I", credits: 4, prereq: "FGC-105" },
-      { code: "INF-221", name: "Introducción a la Programación", credits: 3, prereq: "FGC-106" },
-      { code: "MTI-200", name: "Matemática II", credits: 4, prereq: "FGC-105" }
-    ]},
-    { name: "Cuarto Cuatrimestre", courses: [
-      { code: "FGC-109", name: "Filosofía", credits: 2, prereq: "FGC-102" },
-      { code: "FGC-110", name: "Desarrollo Sostenible y Gestión de Riesgos", credits: 2, prereq: "FGC-102" },
-      { code: "MTI-300", name: "Matemática III", credits: 4, prereq: "MTI-200" },
-      { code: "DMF-210", name: "Física II", credits: 4, prereq: "DMF-209" }
-    ]},
-    { name: "Quinto Cuatrimestre", courses: [
-      { code: "MAT-241", name: "Estadística I", credits: 3, prereq: "FGC-105" },
-      { code: "QUI-400", name: "Química I", credits: 3, prereq: "FGC-105" },
-      { code: "INF-215", name: "Ingeniería Económica", credits: 3, prereq: "MTI-200" },
-      { code: "ING-103", name: "Cálculo Integral", credits: 4, prereq: "MTI-300" }
-    ]},
-    { name: "Sexto Cuatrimestre", courses: [
-      { code: "MAT-242", name: "Estadística II", credits: 3, prereq: "MAT-241" },
-      { code: "ING-105", name: "Taller de Mecánica de Hardware", credits: 3, prereq: "FGC-106" },
-      { code: "ING-104", name: "Cálculo Vectorial", credits: 4, prereq: "ING-103" },
-      { code: "INF-222", name: "Sistema Operativo I", credits: 3, prereq: "FGC-106" },
-      { code: "ING-102", name: "Ciencia e Ingeniería de Materiales", credits: 4, prereq: "QUI-400" }
-    ]},
-    { name: "Séptimo Cuatrimestre", courses: [
-      { code: "TIC-408", name: "Seguridad de la Información", credits: 3, prereq: "FGC-106" },
-      { code: "ISW-301", name: "Taller de Programación I", credits: 5, prereq: "INF-221" },
-      { code: "INF-437", name: "Redes Informáticas", credits: 3, prereq: "INF-222" },
-      { code: "ISW-311", name: "Análisis y Diseño de Sistemas", credits: 4, prereq: "INF-221" }
-    ]},
-    { name: "Octavo Cuatrimestre", courses: [
-      { code: "ISW-221", name: "Estructura de Datos", credits: 4, prereq: "ISW-301" },
-      { code: "TIC-402", name: "Ética en Tecnología", credits: 2, prereq: "FGC-110" },
-      { code: "ISW-404", name: "Electiva I", credits: 3, prereq: "7mo. Cuat." },
-      { code: "ISW-321", name: "Taller de Bases de Datos I", credits: 4, prereq: "ISW-311" }
-    ]},
-    { name: "Noveno Cuatrimestre", courses: [
-      { code: "ISW-302", name: "Taller de Programación II", credits: 5, prereq: "ISW-301" },
-      { code: "ISW-312", name: "Ingeniería de Software I", credits: 4, prereq: "ISW-301" },
-      { code: "ISW-314", name: "Ingeniería de Requisitos y Modelado", credits: 4, prereq: "ISW-311" },
-      { code: "ISW-322", name: "Taller de Bases de Datos II", credits: 4, prereq: "ISW-321" },
-      { code: "ISW-324", name: "Sistemas de Información Geográfica", credits: 3, prereq: "ISW-321" }
-    ]},
-    { name: "Décimo Cuatrimestre", courses: [
-      { code: "ISW-313", name: "Ingeniería de Software II", credits: 4, prereq: "ISW-312" },
-      { code: "ISW-303", name: "Taller de Programación III", credits: 5, prereq: "ISW-302" },
-      { code: "ISW-405", name: "Electiva II", credits: 3, prereq: "9no. Cuat." },
-      { code: "ISW-401", name: "Proyecto de Software I", credits: 5, prereq: "ISW-312" },
-      { code: "ISW-403", name: "Pasantía – Práctica de Ing. de Software", credits: 8, prereq: "ISW-302" }
-    ]},
-    { name: "Undécimo Cuatrimestre", courses: [
-      { code: "ISW-304", name: "Taller de Programación IV", credits: 5, prereq: "ISW-303" },
-      { code: "ISW-305", name: "Diseño y Construcción de Interfaces", credits: 4, prereq: "ISW-302" },
-      { code: "ISW-402", name: "Proyecto de Software II", credits: 5, prereq: "ISW-401" },
-      { code: "FGC-111", name: "Seminario de Grado", credits: 3, prereq: "FGC-103" }
-    ]},
-    { name: "Duodécimo Cuatrimestre", courses: [
-      { code: "ISW-323", name: "Taller de Base de Datos III", credits: 4, prereq: "ISW-322" },
-      { code: "ISW-400", name: "Inteligencia Artificial", credits: 4, prereq: "ISW-303" },
-      { code: "ISW-600", name: "Proyecto Integrador de Software: Trabajo de Grado", credits: 6, prereq: "Todas" }
-    ]}
-  ]
-};
+// ── IMPORTANT: Replace with your own Google OAuth Client ID ──────────────────
+// To get one: https://console.cloud.google.com → Create project → APIs & Services
+// → Credentials → Create OAuth 2.0 Client ID (Web app) → add your domain to origins
+// For local testing add: http://localhost and http://localhost:PORT
+const GOOGLE_CLIENT_ID = '1013365849338-l8b795crk59plmoalt0fqvlseamd052o.apps.googleusercontent.com';
+// ────────────────────────────────────────────────────────────────────────────
 
-// ── State ────────────────────────────────────────────────
+const DRIVE_FILENAME = 'pensum_isw_progress.json';
+const DRIVE_SCOPE    = 'https://www.googleapis.com/auth/drive.appdata';
+
+// ── Course data ───────────────────────────────────────────
+const coursesData = {quarters:[
+  {name:"Primer Cuatrimestre",courses:[
+    {code:"FGC-101",name:"Orientación Académica Institucional",credits:2,prereq:"-"},
+    {code:"FGC-102",name:"Método del Trabajo Académico",credits:2,prereq:"-"},
+    {code:"FGC-103",name:"Metodología de la Investigación",credits:3,prereq:"-"},
+    {code:"ADE-101",name:"Administración I",credits:3,prereq:"-"}
+  ]},
+  {name:"Segundo Cuatrimestre",courses:[
+    {code:"FGC-104",name:"Lengua Española I",credits:3,prereq:"FGC-102"},
+    {code:"FGC-105",name:"Matemática Básica I",credits:3,prereq:"FGC-102"},
+    {code:"FGC-106",name:"Tecnología de la Información y Comunicación I",credits:3,prereq:"FGC-102"},
+    {code:"ING-101",name:"Introducción a la Ingeniería",credits:3,prereq:"-"}
+  ]},
+  {name:"Tercer Cuatrimestre",courses:[
+    {code:"FGC-107",name:"Historia Social Dominicana",credits:3,prereq:"FGC-102"},
+    {code:"FGC-108",name:"Inglés I",credits:3,prereq:"FGC-102"},
+    {code:"DMF-209",name:"Física I",credits:4,prereq:"FGC-105"},
+    {code:"INF-221",name:"Introducción a la Programación",credits:3,prereq:"FGC-106"},
+    {code:"MTI-200",name:"Matemática II",credits:4,prereq:"FGC-105"}
+  ]},
+  {name:"Cuarto Cuatrimestre",courses:[
+    {code:"FGC-109",name:"Filosofía",credits:2,prereq:"FGC-102"},
+    {code:"FGC-110",name:"Desarrollo Sostenible y Gestión de Riesgos",credits:2,prereq:"FGC-102"},
+    {code:"MTI-300",name:"Matemática III",credits:4,prereq:"MTI-200"},
+    {code:"DMF-210",name:"Física II",credits:4,prereq:"DMF-209"}
+  ]},
+  {name:"Quinto Cuatrimestre",courses:[
+    {code:"MAT-241",name:"Estadística I",credits:3,prereq:"FGC-105"},
+    {code:"QUI-400",name:"Química I",credits:3,prereq:"FGC-105"},
+    {code:"INF-215",name:"Ingeniería Económica",credits:3,prereq:"MTI-200"},
+    {code:"ING-103",name:"Cálculo Integral",credits:4,prereq:"MTI-300"}
+  ]},
+  {name:"Sexto Cuatrimestre",courses:[
+    {code:"MAT-242",name:"Estadística II",credits:3,prereq:"MAT-241"},
+    {code:"ING-105",name:"Taller de Mecánica de Hardware",credits:3,prereq:"FGC-106"},
+    {code:"ING-104",name:"Cálculo Vectorial",credits:4,prereq:"ING-103"},
+    {code:"INF-222",name:"Sistema Operativo I",credits:3,prereq:"FGC-106"},
+    {code:"ING-102",name:"Ciencia e Ingeniería de Materiales",credits:4,prereq:"QUI-400"}
+  ]},
+  {name:"Séptimo Cuatrimestre",courses:[
+    {code:"TIC-408",name:"Seguridad de la Información",credits:3,prereq:"FGC-106"},
+    {code:"ISW-301",name:"Taller de Programación I",credits:5,prereq:"INF-221"},
+    {code:"INF-437",name:"Redes Informáticas",credits:3,prereq:"INF-222"},
+    {code:"ISW-311",name:"Análisis y Diseño de Sistemas",credits:4,prereq:"INF-221"}
+  ]},
+  {name:"Octavo Cuatrimestre",courses:[
+    {code:"ISW-221",name:"Estructura de Datos",credits:4,prereq:"ISW-301"},
+    {code:"TIC-402",name:"Ética en Tecnología",credits:2,prereq:"FGC-110"},
+    {code:"ISW-404",name:"Electiva I",credits:3,prereq:"7mo. Cuat."},
+    {code:"ISW-321",name:"Taller de Bases de Datos I",credits:4,prereq:"ISW-311"}
+  ]},
+  {name:"Noveno Cuatrimestre",courses:[
+    {code:"ISW-302",name:"Taller de Programación II",credits:5,prereq:"ISW-301"},
+    {code:"ISW-312",name:"Ingeniería de Software I",credits:4,prereq:"ISW-301"},
+    {code:"ISW-314",name:"Ingeniería de Requisitos y Modelado",credits:4,prereq:"ISW-311"},
+    {code:"ISW-322",name:"Taller de Bases de Datos II",credits:4,prereq:"ISW-321"},
+    {code:"ISW-324",name:"Sistemas de Información Geográfica",credits:3,prereq:"ISW-321"}
+  ]},
+  {name:"Décimo Cuatrimestre",courses:[
+    {code:"ISW-313",name:"Ingeniería de Software II",credits:4,prereq:"ISW-312"},
+    {code:"ISW-303",name:"Taller de Programación III",credits:5,prereq:"ISW-302"},
+    {code:"ISW-405",name:"Electiva II",credits:3,prereq:"9no. Cuat."},
+    {code:"ISW-401",name:"Proyecto de Software I",credits:5,prereq:"ISW-312"},
+    {code:"ISW-403",name:"Pasantía – Práctica de Ing. de Software",credits:8,prereq:"ISW-302"}
+  ]},
+  {name:"Undécimo Cuatrimestre",courses:[
+    {code:"ISW-304",name:"Taller de Programación IV",credits:5,prereq:"ISW-303"},
+    {code:"ISW-305",name:"Diseño y Construcción de Interfaces",credits:4,prereq:"ISW-302"},
+    {code:"ISW-402",name:"Proyecto de Software II",credits:5,prereq:"ISW-401"},
+    {code:"FGC-111",name:"Seminario de Grado",credits:3,prereq:"FGC-103"}
+  ]},
+  {name:"Duodécimo Cuatrimestre",courses:[
+    {code:"ISW-323",name:"Taller de Base de Datos III",credits:4,prereq:"ISW-322"},
+    {code:"ISW-400",name:"Inteligencia Artificial",credits:4,prereq:"ISW-303"},
+    {code:"ISW-600",name:"Proyecto Integrador de Software: Trabajo de Grado",credits:6,prereq:"Todas"}
+  ]}
+]};
+
+// ── App state ─────────────────────────────────────────────
 let completedCourses = new Map();
-try {
-  const saved = localStorage.getItem('completedCourses');
-  if (saved) completedCourses = new Map(JSON.parse(saved));
-} catch(e) {}
-
+try { const s=localStorage.getItem('completedCourses'); if(s) completedCourses=new Map(JSON.parse(s)); } catch(e){}
 let currentCode = null;
+let confettiActive = false;
+let confettiFrame  = null;
+let wasAbove90     = false;
 
-// ── Helpers ──────────────────────────────────────────────
-function findCourse(code) {
-  for (const q of coursesData.quarters)
-    for (const c of q.courses)
-      if (c.code === code) return c;
-  return null;
-}
+// ── Google auth state ─────────────────────────────────────
+let googleUser    = null;
+let accessToken   = null;
+let tokenClient   = null;
 
-function save() {
-  localStorage.setItem('completedCourses', JSON.stringify([...completedCourses]));
-}
-
-function calculatePGA() {
-  let pts = 0, cred = 0;
-  completedCourses.forEach((grade, code) => {
-    const c = findCourse(code);
-    if (c) { pts += grade * c.credits; cred += c.credits; }
-  });
-  return cred > 0 ? (pts / cred).toFixed(2) : '0.00';
-}
-
-// ── Stats ────────────────────────────────────────────────
-function updateStats() {
-  const keys = [...completedCourses.keys()];
-  const totalCred = keys.reduce((s, k) => {
-    const c = findCourse(k); return s + (c ? c.credits : 0);
-  }, 0);
-  const pct = Math.round((keys.length / 51) * 100);
-  const credPct = Math.round((totalCred / 185) * 100);
-  const pga = parseFloat(calculatePGA());
-
-  document.getElementById('statCredits').textContent = totalCred;
-  document.getElementById('statProgress').textContent = pct;
-  document.getElementById('statCourses').textContent = keys.length;
-  document.getElementById('statPga').textContent = pga.toFixed(2);
-
-  document.getElementById('barCredits').style.width = credPct + '%';
-  document.getElementById('barProgress').style.width = pct + '%';
-  document.getElementById('barCourses').style.width = Math.round((keys.length/51)*100) + '%';
-  document.getElementById('barPga').style.width = Math.min(100, Math.round((pga/100)*100)) + '%';
-}
-
-// ── Render ───────────────────────────────────────────────
-function renderQuarters() {
-  const search = document.getElementById('searchInput').value.toLowerCase();
-  const filter = document.getElementById('filterSelect').value;
-  const container = document.getElementById('quartersContainer');
-  container.innerHTML = '';
-
-  coursesData.quarters.forEach((quarter, qi) => {
-    const filtered = quarter.courses.filter(c => {
-      const done = completedCourses.has(c.code);
-      const matchSearch = c.name.toLowerCase().includes(search) || c.code.toLowerCase().includes(search);
-      const matchFilter = filter === 'all' || (filter === 'completed' && done) || (filter === 'pending' && !done);
-      return matchSearch && matchFilter;
+// ── Init Google Identity ──────────────────────────────────
+window.addEventListener('load', () => {
+  if (GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com') return;
+  try {
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_CLIENT_ID,
+      scope: DRIVE_SCOPE + ' https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
+      callback: onTokenResponse,
     });
-    if (filtered.length === 0) return;
+  } catch(e) { console.warn('Google Identity not loaded yet', e); }
+});
 
-    const doneCount = filtered.filter(c => completedCourses.has(c.code)).length;
-    const pct = Math.round((doneCount / filtered.length) * 100);
+function handleSignIn() {
+  if (GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com') {
+    showSyncMsg('info', '⚙️ Configura tu Google Client ID en el código');
+    return;
+  }
+  if (!tokenClient) {
+    showSyncMsg('err', 'Error cargando Google Sign-In');
+    return;
+  }
+  tokenClient.requestAccessToken({ prompt: 'consent' });
+}
 
-    const div = document.createElement('div');
-    div.className = 'quarter' + (qi < 2 ? ' open' : '');
-    div.innerHTML = `
+async function onTokenResponse(resp) {
+  if (resp.error) { showSyncMsg('err', 'Error de autenticación'); return; }
+  accessToken = resp.access_token;
+  // Fetch user info
+  try {
+    const r = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+      headers: { Authorization: 'Bearer ' + accessToken }
+    });
+    googleUser = await r.json();
+    renderSignedIn(googleUser);
+    showSyncMsg('ok', '✓ Conectado. Cargando tu progreso…');
+    await downloadFromDrive(true); // auto-load on sign in
+  } catch(e) {
+    showSyncMsg('err', 'Error obteniendo perfil');
+  }
+}
+
+function renderSignedIn(u) {
+  document.getElementById('signedOutView').classList.add('hidden');
+  document.getElementById('signedInView').classList.remove('hidden');
+  document.getElementById('googleCard').classList.add('connected');
+  document.getElementById('userName').textContent  = u.name  || 'Usuario';
+  document.getElementById('userEmail').textContent = u.email || '';
+  const avatarEl = document.getElementById('userAvatar');
+  if (u.picture) {
+    avatarEl.innerHTML = `<img src="${u.picture}" alt="avatar">`;
+  } else {
+    avatarEl.textContent = (u.name||'U')[0].toUpperCase();
+  }
+}
+
+function handleSignOut() {
+  if (accessToken) google.accounts.oauth2.revoke(accessToken, ()=>{});
+  accessToken = null;
+  googleUser  = null;
+  document.getElementById('signedInView').classList.add('hidden');
+  document.getElementById('signedOutView').classList.remove('hidden');
+  document.getElementById('googleCard').classList.remove('connected');
+  document.getElementById('syncStatus').classList.remove('show');
+}
+
+// ── Sync status ───────────────────────────────────────────
+function showSyncMsg(type, msg, duration=4000) {
+  const el = document.getElementById('syncStatus');
+  el.className = 'sync-status show ' + type;
+  el.innerHTML = (type==='info' ? `<div class="spin-dot"></div>` : '') + msg;
+  if (duration > 0) setTimeout(()=>{ el.classList.remove('show'); }, duration);
+}
+
+// ── Drive API helpers ─────────────────────────────────────
+async function driveRequest(url, options={}) {
+  const res = await fetch(url, {
+    ...options,
+    headers: {
+      Authorization: 'Bearer ' + accessToken,
+      ...(options.headers||{})
+    }
+  });
+  if (!res.ok) throw new Error(`Drive error ${res.status}`);
+  return res;
+}
+
+async function findDriveFile() {
+  const r = await driveRequest(
+    `https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name="${DRIVE_FILENAME}"&fields=files(id,name,modifiedTime)`
+  );
+  const data = await r.json();
+  return data.files?.[0] || null;
+}
+
+async function uploadToDrive() {
+  if (!accessToken) { showSyncMsg('err', 'Inicia sesión primero'); return; }
+  document.getElementById('btnUpload').disabled = true;
+  showSyncMsg('info', 'Guardando en Drive…', 0);
+
+  const content = JSON.stringify({
+    completedCourses: [...completedCourses.entries()],
+    savedAt: new Date().toISOString(),
+    app: 'pensum-isw-unicaribe'
+  });
+
+  try {
+    const existing = await findDriveFile();
+    if (existing) {
+      // Update existing file
+      await driveRequest(
+        `https://www.googleapis.com/upload/drive/v3/files/${existing.id}?uploadType=media`,
+        { method:'PATCH', headers:{'Content-Type':'application/json'}, body: content }
+      );
+    } else {
+      // Create new file in appDataFolder (hidden from user's Drive UI, only this app sees it)
+      const meta = { name: DRIVE_FILENAME, parents: ['appDataFolder'] };
+      const form = new FormData();
+      form.append('metadata', new Blob([JSON.stringify(meta)], {type:'application/json'}));
+      form.append('file',     new Blob([content], {type:'application/json'}));
+      await driveRequest(
+        'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+        { method:'POST', body: form }
+      );
+    }
+    showSyncMsg('ok', '✓ Guardado en la nube');
+  } catch(e) {
+    showSyncMsg('err', '✗ Error al guardar');
+  }
+  document.getElementById('btnUpload').disabled = false;
+}
+
+async function downloadFromDrive(silent=false) {
+  if (!accessToken) { if(!silent) showSyncMsg('err','Inicia sesión primero'); return; }
+  if (!silent) { document.getElementById('btnDownload').disabled = true; }
+  showSyncMsg('info', 'Cargando desde Drive…', 0);
+
+  try {
+    const file = await findDriveFile();
+    if (!file) {
+      showSyncMsg('ok', 'No hay datos guardados aún. ¡Empieza marcando materias!');
+      return;
+    }
+    const r = await driveRequest(
+      `https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`
+    );
+    const data = await r.json();
+    if (data.completedCourses) {
+      const incoming = new Map(data.completedCourses);
+      const incomingCount = incoming.size;
+      const localCount    = completedCourses.size;
+
+      if (silent && localCount === 0) {
+        // Auto-load on sign-in if local is empty
+        completedCourses = incoming;
+        save(); updateStats(); renderQuarters();
+        showSyncMsg('ok', `✓ ${incomingCount} materias cargadas desde Drive`);
+      } else if (silent && incomingCount > localCount) {
+        completedCourses = incoming;
+        save(); updateStats(); renderQuarters();
+        showSyncMsg('ok', `✓ Progreso actualizado desde Drive (${incomingCount} materias)`);
+      } else if (!silent) {
+        const d = new Date(data.savedAt);
+        const dateStr = d.toLocaleDateString('es', {day:'numeric',month:'short',year:'numeric'});
+        if (confirm(`Drive tiene ${incomingCount} materias guardadas (${dateStr}).\n\n¿Reemplazar tu progreso local?`)) {
+          completedCourses = incoming;
+          save(); updateStats(); renderQuarters();
+          showSyncMsg('ok', `✓ ${incomingCount} materias cargadas`);
+          closeDrawer();
+        } else {
+          document.getElementById('syncStatus').classList.remove('show');
+        }
+      } else {
+        showSyncMsg('ok', `✓ Local (${localCount}) ≥ Drive (${incomingCount}) — no se modificó`);
+      }
+    }
+  } catch(e) {
+    showSyncMsg('err', '✗ Error al cargar desde Drive');
+  }
+  if (!silent) document.getElementById('btnDownload').disabled = false;
+}
+
+// ── Confetti ──────────────────────────────────────────────
+const canvas = document.getElementById('confettiCanvas');
+const ctx    = canvas.getContext('2d');
+let particles = [];
+function resizeCanvas(){ canvas.width=window.innerWidth; canvas.height=window.innerHeight; }
+window.addEventListener('resize', resizeCanvas); resizeCanvas();
+function makeParticle(){
+  const colors=['#7c6ef7','#5eead4','#f472b6','#fbbf24','#34d399','#60a5fa'];
+  return { x:Math.random()*canvas.width, y:-10, r:Math.random()*5+3, color:colors[Math.floor(Math.random()*colors.length)], vx:(Math.random()-.5)*3, vy:Math.random()*3+2, angle:Math.random()*360, spin:(Math.random()-.5)*8, shape:Math.random()<.5?'rect':'circle', opacity:1 };
+}
+function drawParticle(p){
+  ctx.save(); ctx.globalAlpha=p.opacity; ctx.fillStyle=p.color;
+  ctx.translate(p.x,p.y); ctx.rotate(p.angle*Math.PI/180);
+  if(p.shape==='rect') ctx.fillRect(-p.r,-p.r/2,p.r*2,p.r);
+  else { ctx.beginPath(); ctx.arc(0,0,p.r,0,Math.PI*2); ctx.fill(); }
+  ctx.restore();
+}
+function animateConfetti(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  particles.forEach(p=>{ p.x+=p.vx; p.y+=p.vy; p.angle+=p.spin; if(p.y>canvas.height*.7) p.opacity-=.02; drawParticle(p); });
+  particles=particles.filter(p=>p.opacity>0);
+  if(particles.length>0) confettiFrame=requestAnimationFrame(animateConfetti);
+  else { canvas.classList.remove('active'); confettiActive=false; }
+}
+function launchConfetti(){
+  if(confettiActive) return;
+  confettiActive=true; canvas.classList.add('active'); particles=[];
+  for(let i=0;i<120;i++) particles.push(makeParticle());
+  setTimeout(()=>{ for(let i=0;i<80;i++) particles.push(makeParticle()); },400);
+  if(confettiFrame) cancelAnimationFrame(confettiFrame);
+  animateConfetti();
+}
+
+// ── Celebration check ─────────────────────────────────────
+function checkCelebration(pct){
+  const banner=document.getElementById('celebBanner');
+  const sub=document.getElementById('headerSub');
+  const bars=document.querySelectorAll('.stat-bar-fill');
+  const cards=document.querySelectorAll('.stat-card');
+  if(pct>=90){
+    document.getElementById('mainHeader').classList.add('glow');
+    sub.classList.add('fire');
+    sub.textContent=pct===100?'🎓 ¡Pensum completado!':`🔥 ${pct}% — ¡Ya casi terminas!`;
+    cards.forEach(c=>c.classList.add('glowing'));
+    bars.forEach(b=>b.classList.add('fire'));
+    if(!wasAbove90){
+      wasAbove90=true; launchConfetti();
+      banner.textContent=pct===100?'🎓 ¡Lo lograste! ¡Pensum completo!':'🔥 ¡Ya estás en la recta final!';
+      banner.classList.add('show');
+      setTimeout(()=>banner.classList.remove('show'),4000);
+    }
+  } else {
+    document.getElementById('mainHeader').classList.remove('glow');
+    sub.classList.remove('fire');
+    sub.textContent='Ing. de Software · UNICARIBE';
+    cards.forEach(c=>c.classList.remove('glowing'));
+    bars.forEach(b=>b.classList.remove('fire'));
+    wasAbove90=false;
+  }
+}
+
+// ── Helpers ───────────────────────────────────────────────
+function findCourse(code){ for(const q of coursesData.quarters) for(const c of q.courses) if(c.code===code) return c; return null; }
+function save(){ localStorage.setItem('completedCourses',JSON.stringify([...completedCourses])); }
+function calculatePGA(){
+  let pts=0,cred=0;
+  completedCourses.forEach((g,code)=>{ const c=findCourse(code); if(c){pts+=g*c.credits;cred+=c.credits;} });
+  return cred>0?(pts/cred).toFixed(2):'0.00';
+}
+
+// ── Stats ─────────────────────────────────────────────────
+function updateStats(){
+  const keys=[...completedCourses.keys()];
+  const totalCred=keys.reduce((s,k)=>{ const c=findCourse(k); return s+(c?c.credits:0); },0);
+  const pct=Math.round((keys.length/51)*100);
+  const pga=parseFloat(calculatePGA());
+  document.getElementById('statCredits').textContent=totalCred;
+  document.getElementById('statProgress').textContent=pct;
+  document.getElementById('statCourses').textContent=keys.length;
+  document.getElementById('statPga').textContent=pga.toFixed(2);
+  document.getElementById('barCredits').style.width=Math.round((totalCred/185)*100)+'%';
+  document.getElementById('barProgress').style.width=pct+'%';
+  document.getElementById('barCourses').style.width=Math.round((keys.length/51)*100)+'%';
+  document.getElementById('barPga').style.width=Math.min(100,Math.round((pga/100)*100))+'%';
+  checkCelebration(pct);
+}
+
+// ── Render ────────────────────────────────────────────────
+function renderQuarters(){
+  const search=document.getElementById('searchInput').value.toLowerCase();
+  const filter=document.getElementById('filterSelect').value;
+  const container=document.getElementById('quartersContainer');
+  const openStates={};
+  container.querySelectorAll('.quarter').forEach(el=>{ openStates[el.dataset.qi]=el.classList.contains('open'); });
+  container.innerHTML='';
+  coursesData.quarters.forEach((quarter,qi)=>{
+    const filtered=quarter.courses.filter(c=>{
+      const done=completedCourses.has(c.code);
+      return (c.name.toLowerCase().includes(search)||c.code.toLowerCase().includes(search))
+        && (filter==='all'||(filter==='completed'&&done)||(filter==='pending'&&!done));
+    });
+    if(!filtered.length) return;
+    const doneCount=filtered.filter(c=>completedCourses.has(c.code)).length;
+    const allDone=doneCount===filtered.length&&filtered.length>0;
+    const pct=Math.round((doneCount/filtered.length)*100);
+    const wasOpen=openStates[qi]!==undefined?openStates[qi]:qi<2;
+    const div=document.createElement('div');
+    div.className='quarter'+(wasOpen?' open':'')+(allDone?' complete':'');
+    div.dataset.qi=qi;
+    div.innerHTML=`
       <div class="quarter-header" onclick="this.parentElement.classList.toggle('open')">
         <span class="quarter-title">${quarter.name}</span>
         <div class="quarter-meta">
-          <span class="quarter-badge">${doneCount}/${filtered.length}</span>
+          <span class="quarter-badge${allDone?' done':''}">${doneCount}/${filtered.length}</span>
           <span style="font-size:11px;color:var(--muted)">${pct}%</span>
           <span class="chevron">▾</span>
         </div>
       </div>
       <div class="quarter-body">
-        ${filtered.map(c => {
-          const done = completedCourses.has(c.code);
-          const grade = completedCourses.get(c.code);
-          return `
-            <div class="course-row" onclick="toggleCourse('${c.code}')">
-              <div class="course-check ${done ? 'done' : ''}"></div>
-              <div class="course-info">
-                <div class="course-name ${done ? 'done' : ''}">${c.name}</div>
-                <div class="course-meta">
-                  <span class="course-code">${c.code}</span>
-                  &nbsp;·&nbsp;${c.credits} cr
-                  ${c.prereq !== '-' ? `&nbsp;·&nbsp;Pre: ${c.prereq}` : ''}
-                </div>
-              </div>
-              <div class="course-grade">${done ? grade.toFixed(1) : ''}</div>
+        ${filtered.map(c=>{
+          const done=completedCourses.has(c.code);
+          const grade=completedCourses.get(c.code);
+          return `<div class="course-row" onclick="toggleCourse('${c.code}')">
+            <div class="course-check ${done?'done':''}"></div>
+            <div class="course-info">
+              <div class="course-name ${done?'done':''}">${c.name}</div>
+              <div class="course-meta"><span class="course-code">${c.code}</span> · ${c.credits} cr${c.prereq!=='-'?` · Pre: ${c.prereq}`:''}</div>
             </div>
-          `;
+            <div class="course-grade">${done?grade.toFixed(1):''}</div>
+          </div>`;
         }).join('')}
-      </div>
-    `;
+      </div>`;
     container.appendChild(div);
   });
 }
 
-// ── Toggle / Modal ───────────────────────────────────────
-function toggleCourse(code) {
-  if (completedCourses.has(code)) {
-    if (confirm('¿Quitar esta materia de completadas?')) {
-      completedCourses.delete(code);
-      save(); updateStats(); renderQuarters();
-    }
-  } else {
-    const c = findCourse(code);
-    if (c) openModal(c);
-  }
+// ── Toggle / Modal ────────────────────────────────────────
+function toggleCourse(code){
+  if(completedCourses.has(code)){
+    if(confirm('¿Quitar esta materia de completadas?')){ completedCourses.delete(code); save(); updateStats(); renderQuarters(); }
+  } else { const c=findCourse(code); if(c) openModal(c); }
 }
-
-function openModal(c) {
-  currentCode = c.code;
-  document.getElementById('modalCode').textContent = c.code;
-  document.getElementById('modalName').textContent = c.name;
-  document.getElementById('gradeInput').value = '';
-  document.getElementById('gradeError').textContent = '';
+function openModal(c){
+  currentCode=c.code;
+  document.getElementById('modalCode').textContent=c.code;
+  document.getElementById('modalName').textContent=c.name;
+  document.getElementById('gradeInput').value='';
+  document.getElementById('gradeError').textContent='';
   document.getElementById('gradeError').classList.add('hidden');
   document.getElementById('gradeModal').classList.add('open');
-  setTimeout(() => document.getElementById('gradeInput').focus(), 100);
+  setTimeout(()=>document.getElementById('gradeInput').focus(),100);
+}
+function closeModal(){ document.getElementById('gradeModal').classList.remove('open'); currentCode=null; }
+function submitGrade(){
+  const val=document.getElementById('gradeInput').value;
+  const err=document.getElementById('gradeError');
+  const g=parseFloat(val);
+  if(!val||isNaN(g)||g<0||g>100){ err.textContent='Ingresa una calificación entre 0 y 100.'; err.classList.remove('hidden'); return; }
+  completedCourses.set(currentCode,g); save(); updateStats(); renderQuarters(); closeModal();
 }
 
-function closeModal() {
-  document.getElementById('gradeModal').classList.remove('open');
-  currentCode = null;
-}
+// ── Drawer ────────────────────────────────────────────────
+const drawer=document.getElementById('drawer');
+const drawerOverlay=document.getElementById('drawerOverlay');
+document.getElementById('menuBtn').addEventListener('click',()=>{ drawer.classList.add('open'); drawerOverlay.classList.add('open'); });
+function closeDrawer(){ drawer.classList.remove('open'); drawerOverlay.classList.remove('open'); }
+document.getElementById('closeDrawer').addEventListener('click',closeDrawer);
+drawerOverlay.addEventListener('click',closeDrawer);
 
-function submitGrade() {
-  const val = document.getElementById('gradeInput').value;
-  const err = document.getElementById('gradeError');
-  const g = parseFloat(val);
-  if (!val || isNaN(g) || g < 0 || g > 100) {
-    err.textContent = 'Ingresa una calificación entre 0 y 100.';
-    err.classList.remove('hidden');
-    return;
-  }
-  completedCourses.set(currentCode, g);
-  save(); updateStats(); renderQuarters();
-  closeModal();
+// ── Local import/export ───────────────────────────────────
+function exportProgress(){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify({completedCourses:[...completedCourses.entries()],date:new Date().toISOString()},null,2)],{type:'application/json'}));
+  a.download=`pensum_${new Date().toISOString().split('T')[0]}.json`;
+  a.click(); URL.revokeObjectURL(a.href);
 }
-
-// ── Drawer ───────────────────────────────────────────────
-const drawer = document.getElementById('drawer');
-const overlay = document.getElementById('drawerOverlay');
-document.getElementById('menuBtn').addEventListener('click', () => {
-  drawer.classList.add('open'); overlay.classList.add('open');
-});
-function closeDrawer() {
-  drawer.classList.remove('open'); overlay.classList.remove('open');
-}
-document.getElementById('closeDrawer').addEventListener('click', closeDrawer);
-overlay.addEventListener('click', closeDrawer);
-
-// ── Import / Export ──────────────────────────────────────
-function exportProgress() {
-  const data = { completedCourses: [...completedCourses.entries()], date: new Date().toISOString() };
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `pensum_${new Date().toISOString().split('T')[0]}.json`;
-  a.click();
-  URL.revokeObjectURL(a.href);
-}
-
-function importProgress(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    try {
-      const data = JSON.parse(ev.target.result);
-      if (!data.completedCourses) throw new Error();
-      if (confirm('¿Reemplazar tu progreso actual con este archivo?')) {
-        completedCourses = new Map(data.completedCourses);
-        save(); updateStats(); renderQuarters();
-        closeDrawer();
-      }
-    } catch { alert('Archivo inválido.'); }
-  };
+function importProgress(e){
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{ try { const data=JSON.parse(ev.target.result); if(!data.completedCourses) throw new Error(); if(confirm('¿Reemplazar tu progreso actual?')){ completedCourses=new Map(data.completedCourses); save(); updateStats(); renderQuarters(); closeDrawer(); } } catch{ alert('Archivo inválido.'); } };
   reader.readAsText(file);
 }
 
-// ── Events ───────────────────────────────────────────────
-document.getElementById('searchInput').addEventListener('input', renderQuarters);
-document.getElementById('filterSelect').addEventListener('change', renderQuarters);
-document.getElementById('gradeInput').addEventListener('keydown', e => { if (e.key === 'Enter') submitGrade(); });
-document.getElementById('gradeModal').addEventListener('click', e => { if (e.target.id === 'gradeModal') closeModal(); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+// ── Events ────────────────────────────────────────────────
+document.getElementById('searchInput').addEventListener('input',renderQuarters);
+document.getElementById('filterSelect').addEventListener('change',renderQuarters);
+document.getElementById('gradeInput').addEventListener('keydown',e=>{ if(e.key==='Enter') submitGrade(); });
+document.getElementById('gradeModal').addEventListener('click',e=>{ if(e.target.id==='gradeModal') closeModal(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
 
-// ── Init ─────────────────────────────────────────────────
+// ── Init ──────────────────────────────────────────────────
 updateStats();
 renderQuarters();
 </script>
