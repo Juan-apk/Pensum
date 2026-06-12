@@ -5,8 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pensum · Ing. Software</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <!-- Google Identity Services -->
-  <script src="https://accounts.google.com/gsi/client" async></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -22,7 +20,6 @@
     }
     body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100dvh; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
 
-    /* ── Header ── */
     header {
       position: sticky; top: 0; z-index: 100;
       background: var(--bg); border-bottom: 1px solid var(--border);
@@ -34,14 +31,9 @@
     .header-title { font-size: 15px; font-weight: 600; letter-spacing: -.3px; }
     .header-sub   { font-size: 11px; color: var(--muted); transition: color .3s; }
     .header-sub.fire { color: var(--accent2); }
-    .menu-btn {
-      background: var(--surface); border: 1px solid var(--border);
-      color: var(--text); border-radius: 8px; padding: 8px 14px;
-      font-size: 13px; font-family: var(--font); cursor: pointer; transition: background .15s;
-    }
+    .menu-btn { background: var(--surface); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 8px 14px; font-size: 13px; font-family: var(--font); cursor: pointer; transition: background .15s; }
     .menu-btn:hover { background: var(--border); }
 
-    /* ── Confetti ── */
     #confettiCanvas { position: fixed; inset: 0; pointer-events: none; z-index: 9999; opacity: 0; transition: opacity .5s; }
     #confettiCanvas.active { opacity: 1; }
     #celebBanner {
@@ -54,7 +46,6 @@
     }
     #celebBanner.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-    /* ── Drawer ── */
     .drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 200; opacity: 0; pointer-events: none; transition: opacity .2s; }
     .drawer-overlay.open { opacity: 1; pointer-events: all; }
     .drawer {
@@ -69,70 +60,36 @@
     .close-btn { background: none; border: none; color: var(--muted); font-size: 20px; cursor: pointer; padding: 2px 6px; border-radius: 6px; transition: color .15s, background .15s; }
     .close-btn:hover { color: var(--text); background: var(--border); }
     .drawer-section h3 { font-size: 11px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 10px; }
-    .drawer-item {
-      display: flex; align-items: center; gap: 12px; padding: 10px 12px;
-      border-radius: 8px; cursor: pointer; transition: background .15s;
-      color: var(--text); text-decoration: none; font-size: 13px; font-weight: 500;
-      border: none; background: none; width: 100%; text-align: left; font-family: var(--font);
-    }
+    .drawer-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; cursor: pointer; transition: background .15s; color: var(--text); text-decoration: none; font-size: 13px; font-weight: 500; border: none; background: none; width: 100%; text-align: left; font-family: var(--font); }
     .drawer-item:hover { background: var(--border); }
-    .drawer-item:disabled { opacity: .4; cursor: not-allowed; }
     .drawer-item-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
     .icon-blue  { background: rgba(124,110,247,.15); }
     .icon-teal  { background: rgba(94,234,212,.15); }
-    .icon-green { background: rgba(74,222,128,.15); }
     .icon-pink  { background: rgba(244,114,182,.15); }
-    .icon-red   { background: rgba(248,113,113,.15); }
     .drawer-footer { margin-top: auto; font-size: 11px; color: var(--muted); text-align: center; flex-shrink: 0; }
 
-    /* ── Google Account Card ── */
-    .google-card {
-      background: var(--bg); border: 1px solid var(--border);
-      border-radius: 10px; padding: 14px; transition: border-color .3s;
-    }
+    /* Google card */
+    .google-card { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px; transition: border-color .3s; }
     .google-card.connected { border-color: rgba(94,234,212,.3); }
-
-    /* Sign-in state */
-    .signin-area { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
-    .google-signin-btn {
-      display: flex; align-items: center; gap: 10px;
-      background: #fff; color: #3c4043; border: 1px solid #dadce0;
-      border-radius: 8px; padding: 9px 14px; font-family: var(--font);
-      font-size: 13px; font-weight: 500; cursor: pointer; width: 100%;
-      transition: box-shadow .15s, background .15s;
-    }
-    .google-signin-btn:hover { box-shadow: 0 1px 6px rgba(0,0,0,.2); background: #f8f9fa; }
+    .signin-area { display: flex; flex-direction: column; gap: 10px; }
+    .google-signin-btn { display: flex; align-items: center; gap: 10px; background: #fff; color: #3c4043; border: 1px solid #dadce0; border-radius: 8px; padding: 9px 14px; font-family: var(--font); font-size: 13px; font-weight: 500; cursor: pointer; width: 100%; transition: box-shadow .15s; }
+    .google-signin-btn:hover { box-shadow: 0 1px 6px rgba(0,0,0,.2); }
     .google-logo { width: 18px; height: 18px; flex-shrink: 0; }
     .signin-hint { font-size: 11px; color: var(--muted); line-height: 1.4; }
-
-    /* Signed-in state */
     .user-row { display: flex; align-items: center; gap: 10px; }
-    .user-avatar {
-      width: 36px; height: 36px; border-radius: 50%;
-      background: var(--accent); color: #fff; font-size: 14px; font-weight: 600;
-      display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden;
-    }
+    .user-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; }
     .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
     .user-info { flex: 1; min-width: 0; }
     .user-name  { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .user-email { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .sync-row { display: flex; gap: 6px; margin-top: 10px; }
-    .sync-btn {
-      flex: 1; padding: 8px 10px; border-radius: 7px; font-family: var(--font);
-      font-size: 12px; font-weight: 600; cursor: pointer; border: none;
-      transition: opacity .15s; display: flex; align-items: center; justify-content: center; gap: 6px;
-    }
+    .sync-btn { flex: 1; padding: 8px 10px; border-radius: 7px; font-family: var(--font); font-size: 12px; font-weight: 600; cursor: pointer; border: none; transition: opacity .15s; display: flex; align-items: center; justify-content: center; gap: 5px; }
     .sync-btn:hover { opacity: .85; }
     .sync-btn:disabled { opacity: .4; cursor: not-allowed; }
-    .sync-btn.upload { background: var(--accent); color: #fff; }
+    .sync-btn.upload   { background: var(--accent); color: #fff; }
     .sync-btn.download { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
     .sync-btn.signout  { background: var(--surface); color: #f87171; border: 1px solid rgba(248,113,113,.3); }
-
-    /* Sync status */
-    .sync-status {
-      font-size: 11px; margin-top: 8px; padding: 6px 10px; border-radius: 6px;
-      display: none; align-items: center; gap: 6px;
-    }
+    .sync-status { font-size: 11px; margin-top: 8px; padding: 6px 10px; border-radius: 6px; display: none; align-items: center; gap: 6px; }
     .sync-status.show { display: flex; }
     .sync-status.ok   { background: rgba(94,234,212,.1); color: var(--accent2); }
     .sync-status.err  { background: rgba(248,113,113,.1); color: #f87171; }
@@ -140,10 +97,8 @@
     .spin-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: pulse 1s infinite; flex-shrink: 0; }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.2} }
 
-    /* ── Main ── */
     main { padding: 20px; max-width: 720px; margin: 0 auto; }
 
-    /* ── Stats ── */
     .stats-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; margin-bottom: 20px; }
     @media (min-width:500px) { .stats-grid { grid-template-columns: repeat(4,1fr); } }
     .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; transition: border-color .4s, box-shadow .4s; }
@@ -157,7 +112,6 @@
     .stat-bar-fill.fire { background: linear-gradient(90deg,var(--accent),var(--accent2)); animation: shimmer 2s linear infinite; background-size: 200% 100%; }
     @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 
-    /* ── Controls ── */
     .controls { display: flex; gap: 8px; margin-bottom: 20px; }
     .search-wrap { position: relative; flex: 1; }
     .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 13px; color: var(--muted); pointer-events: none; }
@@ -166,7 +120,6 @@
     input[type="text"]:focus, select:focus { border-color: var(--accent); }
     select { cursor: pointer; } select option { background: var(--surface); }
 
-    /* ── Quarter ── */
     .quarter { margin-bottom: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; transition: border-color .4s; }
     .quarter.complete { border-color: rgba(94,234,212,.3); }
     .quarter-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; cursor: pointer; user-select: none; transition: background .15s; }
@@ -180,7 +133,6 @@
     .quarter-body { display: none; padding: 0 12px 12px; border-top: 1px solid var(--border); }
     .quarter.open .quarter-body { display: block; }
 
-    /* ── Course row ── */
     .course-row { display: flex; align-items: center; gap: 12px; padding: 10px 4px; border-bottom: 1px solid rgba(255,255,255,.04); cursor: pointer; border-radius: 6px; transition: background .12s; }
     .course-row:last-child { border-bottom: none; }
     .course-row:hover { background: rgba(255,255,255,.04); }
@@ -194,7 +146,6 @@
     .course-code { color: var(--accent); font-weight: 500; }
     .course-grade { font-size: 13px; font-weight: 600; color: var(--accent2); min-width: 32px; text-align: right; }
 
-    /* ── Grade Modal ── */
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 300; display: flex; align-items: flex-end; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .2s; }
     @media (min-width:500px) { .modal-overlay { align-items: center; padding: 20px; } }
     .modal-overlay.open { opacity: 1; pointer-events: all; }
@@ -212,14 +163,13 @@
     .btn:hover { opacity: .85; }
     .btn-ghost   { background: var(--border); color: var(--text); }
     .btn-primary { background: var(--accent); color: #fff; }
-
     .hidden { display: none !important; }
   </style>
 </head>
 <body>
 
 <canvas id="confettiCanvas"></canvas>
-<div id="celebBanner">🎉 ¡Ya estás en la recta final!</div>
+<div id="celebBanner"></div>
 
 <header id="mainHeader">
   <div class="header-left">
@@ -236,14 +186,11 @@
     <button class="close-btn" id="closeDrawer">✕</button>
   </div>
 
-  <!-- ── Google Account section ── -->
   <div class="drawer-section">
     <h3>Cuenta Google</h3>
     <div class="google-card" id="googleCard">
-
-      <!-- Not signed in -->
       <div id="signedOutView" class="signin-area">
-        <button class="google-signin-btn" id="googleSignInBtn" onclick="handleSignIn()">
+        <button class="google-signin-btn" onclick="handleSignIn()">
           <svg class="google-logo" viewBox="0 0 48 48">
             <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
             <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
@@ -252,51 +199,35 @@
           </svg>
           Iniciar sesión con Google
         </button>
-        <p class="signin-hint">Inicia sesión para sincronizar tu progreso en todos tus dispositivos.</p>
+        <p class="signin-hint">Sincroniza tu progreso en todos tus dispositivos.</p>
       </div>
-
-      <!-- Signed in -->
       <div id="signedInView" class="hidden">
         <div class="user-row">
           <div class="user-avatar" id="userAvatar">J</div>
           <div class="user-info">
-            <div class="user-name" id="userName">—</div>
+            <div class="user-name"  id="userName">—</div>
             <div class="user-email" id="userEmail">—</div>
           </div>
         </div>
         <div class="sync-row">
-          <button class="sync-btn upload" onclick="uploadToDrive()" id="btnUpload">
-            ↑ Guardar
-          </button>
-          <button class="sync-btn download" onclick="downloadFromDrive()" id="btnDownload">
-            ↓ Cargar
-          </button>
-          <button class="sync-btn signout" onclick="handleSignOut()" title="Cerrar sesión">
-            ✕
-          </button>
+          <button class="sync-btn upload"   id="btnUpload"   onclick="uploadToFirebase()">↑ Guardar</button>
+          <button class="sync-btn download" id="btnDownload" onclick="loadFromFirebase()">↓ Cargar</button>
+          <button class="sync-btn signout"  onclick="handleSignOut()" title="Cerrar sesión">✕</button>
         </div>
         <div class="sync-status" id="syncStatus"></div>
       </div>
-
     </div>
   </div>
 
-  <!-- ── Local backup ── -->
   <div class="drawer-section">
     <h3>Respaldo local</h3>
     <button class="drawer-item" onclick="exportProgress()">
       <div class="drawer-item-icon icon-blue">↑</div>
-      <div>
-        <div>Exportar .json</div>
-        <div style="font-size:11px;color:var(--muted);font-weight:400">Descarga una copia</div>
-      </div>
+      <div><div>Exportar .json</div><div style="font-size:11px;color:var(--muted);font-weight:400">Descarga una copia</div></div>
     </button>
     <label class="drawer-item" for="importFile">
       <div class="drawer-item-icon icon-blue">↓</div>
-      <div>
-        <div>Importar .json</div>
-        <div style="font-size:11px;color:var(--muted);font-weight:400">Restaurar desde archivo</div>
-      </div>
+      <div><div>Importar .json</div><div style="font-size:11px;color:var(--muted);font-weight:400">Restaurar desde archivo</div></div>
     </label>
     <input type="file" id="importFile" accept=".json" class="hidden" onchange="importProgress(event)">
   </div>
@@ -305,17 +236,12 @@
     <h3>Apoyo</h3>
     <a href="https://www.paypal.com/donate?business=5ABMFQSKT6YUN&currency_code=USD" target="_blank" class="drawer-item">
       <div class="drawer-item-icon icon-pink">♥</div>
-      <div>
-        <div>Donar</div>
-        <div style="font-size:11px;color:var(--muted);font-weight:400">Una monedita bb</div>
-      </div>
+      <div><div>Donar</div><div style="font-size:11px;color:var(--muted);font-weight:400">Una monedita bb</div></div>
     </a>
   </div>
-
   <div class="drawer-footer">© Juan.apk XD</div>
 </div>
 
-<!-- Main -->
 <main>
   <div class="stats-grid">
     <div class="stat-card" id="cardCredits">
@@ -351,11 +277,9 @@
       <option value="pending">Pendientes</option>
     </select>
   </div>
-
   <div id="quartersContainer"></div>
 </main>
 
-<!-- Grade Modal -->
 <div class="modal-overlay" id="gradeModal">
   <div class="modal-box">
     <div class="modal-course-code" id="modalCode"></div>
@@ -370,16 +294,28 @@
   </div>
 </div>
 
-<script>
-// ── IMPORTANT: Replace with your own Google OAuth Client ID ──────────────────
-// To get one: https://console.cloud.google.com → Create project → APIs & Services
-// → Credentials → Create OAuth 2.0 Client ID (Web app) → add your domain to origins
-// For local testing add: http://localhost and http://localhost:PORT
-const GOOGLE_CLIENT_ID = '1013365849338-l8b795crk59plmoalt0fqvlseamd052o.apps.googleusercontent.com';
-// ────────────────────────────────────────────────────────────────────────────
+<!-- Firebase SDKs -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-const DRIVE_FILENAME = 'pensum_isw_progress.json';
-const DRIVE_SCOPE    = 'https://www.googleapis.com/auth/drive.appdata';
+// ── Firebase config ───────────────────────────────────────
+const firebaseConfig = {
+  apiKey:            "AIzaSyBsvO6DVka9iqbmdZLyueP2KdYfRY6VXXE",
+  authDomain:        "pensum-isw-141f8.firebaseapp.com",
+  databaseURL:       "https://pensum-isw-141f8-default-rtdb.firebaseio.com",
+  projectId:         "pensum-isw-141f8",
+  storageBucket:     "pensum-isw-141f8.firebasestorage.app",
+  messagingSenderId: "523951953709",
+  appId:             "1:523951953709:web:2d4fa3b78f61256d5ee5a4"
+};
+const app      = initializeApp(firebaseConfig);
+const auth     = getAuth(app);
+const db       = getFirestore(app);
+const provider = new GoogleAuthProvider();
 
 // ── Course data ───────────────────────────────────────────
 const coursesData = {quarters:[
@@ -464,197 +400,32 @@ const coursesData = {quarters:[
 let completedCourses = new Map();
 try { const s=localStorage.getItem('completedCourses'); if(s) completedCourses=new Map(JSON.parse(s)); } catch(e){}
 let currentCode = null;
+let currentUser = null;
 let confettiActive = false;
 let confettiFrame  = null;
-let wasAbove90     = false;
 
-// ── Google auth state ─────────────────────────────────────
-let googleUser    = null;
-let accessToken   = null;
-let tokenClient   = null;
-
-// ── Init Google Identity ──────────────────────────────────
-window.addEventListener('load', () => {
-  if (GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com') return;
+// ── Confetti — solo una vez por milestone ─────────────────
+// Guardamos en localStorage qué milestones ya se celebraron
+function getMilestoneSeen(pct) {
+  try { return JSON.parse(localStorage.getItem('celebSeen')||'[]').includes(pct); } catch{ return false; }
+}
+function markMilestoneSeen(pct) {
   try {
-    tokenClient = google.accounts.oauth2.initTokenClient({
-      client_id: GOOGLE_CLIENT_ID,
-      scope: DRIVE_SCOPE + ' https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
-      callback: onTokenResponse,
-    });
-  } catch(e) { console.warn('Google Identity not loaded yet', e); }
-});
-
-function handleSignIn() {
-  if (GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com') {
-    showSyncMsg('info', '⚙️ Configura tu Google Client ID en el código');
-    return;
-  }
-  if (!tokenClient) {
-    showSyncMsg('err', 'Error cargando Google Sign-In');
-    return;
-  }
-  tokenClient.requestAccessToken({ prompt: 'consent' });
+    const seen = JSON.parse(localStorage.getItem('celebSeen')||'[]');
+    if(!seen.includes(pct)) { seen.push(pct); localStorage.setItem('celebSeen', JSON.stringify(seen)); }
+  } catch{}
 }
-
-async function onTokenResponse(resp) {
-  if (resp.error) { showSyncMsg('err', 'Error de autenticación'); return; }
-  accessToken = resp.access_token;
-  // Fetch user info
+// Si el progreso baja de un milestone lo "olvidamos" para que pueda celebrarse de nuevo
+function clearMilestoneIfBelow(pct) {
   try {
-    const r = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-      headers: { Authorization: 'Bearer ' + accessToken }
-    });
-    googleUser = await r.json();
-    renderSignedIn(googleUser);
-    showSyncMsg('ok', '✓ Conectado. Cargando tu progreso…');
-    await downloadFromDrive(true); // auto-load on sign in
-  } catch(e) {
-    showSyncMsg('err', 'Error obteniendo perfil');
-  }
+    const milestones = [90,100];
+    let seen = JSON.parse(localStorage.getItem('celebSeen')||'[]');
+    seen = seen.filter(m => pct >= m);
+    localStorage.setItem('celebSeen', JSON.stringify(seen));
+  } catch{}
 }
 
-function renderSignedIn(u) {
-  document.getElementById('signedOutView').classList.add('hidden');
-  document.getElementById('signedInView').classList.remove('hidden');
-  document.getElementById('googleCard').classList.add('connected');
-  document.getElementById('userName').textContent  = u.name  || 'Usuario';
-  document.getElementById('userEmail').textContent = u.email || '';
-  const avatarEl = document.getElementById('userAvatar');
-  if (u.picture) {
-    avatarEl.innerHTML = `<img src="${u.picture}" alt="avatar">`;
-  } else {
-    avatarEl.textContent = (u.name||'U')[0].toUpperCase();
-  }
-}
-
-function handleSignOut() {
-  if (accessToken) google.accounts.oauth2.revoke(accessToken, ()=>{});
-  accessToken = null;
-  googleUser  = null;
-  document.getElementById('signedInView').classList.add('hidden');
-  document.getElementById('signedOutView').classList.remove('hidden');
-  document.getElementById('googleCard').classList.remove('connected');
-  document.getElementById('syncStatus').classList.remove('show');
-}
-
-// ── Sync status ───────────────────────────────────────────
-function showSyncMsg(type, msg, duration=4000) {
-  const el = document.getElementById('syncStatus');
-  el.className = 'sync-status show ' + type;
-  el.innerHTML = (type==='info' ? `<div class="spin-dot"></div>` : '') + msg;
-  if (duration > 0) setTimeout(()=>{ el.classList.remove('show'); }, duration);
-}
-
-// ── Drive API helpers ─────────────────────────────────────
-async function driveRequest(url, options={}) {
-  const res = await fetch(url, {
-    ...options,
-    headers: {
-      Authorization: 'Bearer ' + accessToken,
-      ...(options.headers||{})
-    }
-  });
-  if (!res.ok) throw new Error(`Drive error ${res.status}`);
-  return res;
-}
-
-async function findDriveFile() {
-  const r = await driveRequest(
-    `https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name="${DRIVE_FILENAME}"&fields=files(id,name,modifiedTime)`
-  );
-  const data = await r.json();
-  return data.files?.[0] || null;
-}
-
-async function uploadToDrive() {
-  if (!accessToken) { showSyncMsg('err', 'Inicia sesión primero'); return; }
-  document.getElementById('btnUpload').disabled = true;
-  showSyncMsg('info', 'Guardando en Drive…', 0);
-
-  const content = JSON.stringify({
-    completedCourses: [...completedCourses.entries()],
-    savedAt: new Date().toISOString(),
-    app: 'pensum-isw-unicaribe'
-  });
-
-  try {
-    const existing = await findDriveFile();
-    if (existing) {
-      // Update existing file
-      await driveRequest(
-        `https://www.googleapis.com/upload/drive/v3/files/${existing.id}?uploadType=media`,
-        { method:'PATCH', headers:{'Content-Type':'application/json'}, body: content }
-      );
-    } else {
-      // Create new file in appDataFolder (hidden from user's Drive UI, only this app sees it)
-      const meta = { name: DRIVE_FILENAME, parents: ['appDataFolder'] };
-      const form = new FormData();
-      form.append('metadata', new Blob([JSON.stringify(meta)], {type:'application/json'}));
-      form.append('file',     new Blob([content], {type:'application/json'}));
-      await driveRequest(
-        'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
-        { method:'POST', body: form }
-      );
-    }
-    showSyncMsg('ok', '✓ Guardado en la nube');
-  } catch(e) {
-    showSyncMsg('err', '✗ Error al guardar');
-  }
-  document.getElementById('btnUpload').disabled = false;
-}
-
-async function downloadFromDrive(silent=false) {
-  if (!accessToken) { if(!silent) showSyncMsg('err','Inicia sesión primero'); return; }
-  if (!silent) { document.getElementById('btnDownload').disabled = true; }
-  showSyncMsg('info', 'Cargando desde Drive…', 0);
-
-  try {
-    const file = await findDriveFile();
-    if (!file) {
-      showSyncMsg('ok', 'No hay datos guardados aún. ¡Empieza marcando materias!');
-      return;
-    }
-    const r = await driveRequest(
-      `https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`
-    );
-    const data = await r.json();
-    if (data.completedCourses) {
-      const incoming = new Map(data.completedCourses);
-      const incomingCount = incoming.size;
-      const localCount    = completedCourses.size;
-
-      if (silent && localCount === 0) {
-        // Auto-load on sign-in if local is empty
-        completedCourses = incoming;
-        save(); updateStats(); renderQuarters();
-        showSyncMsg('ok', `✓ ${incomingCount} materias cargadas desde Drive`);
-      } else if (silent && incomingCount > localCount) {
-        completedCourses = incoming;
-        save(); updateStats(); renderQuarters();
-        showSyncMsg('ok', `✓ Progreso actualizado desde Drive (${incomingCount} materias)`);
-      } else if (!silent) {
-        const d = new Date(data.savedAt);
-        const dateStr = d.toLocaleDateString('es', {day:'numeric',month:'short',year:'numeric'});
-        if (confirm(`Drive tiene ${incomingCount} materias guardadas (${dateStr}).\n\n¿Reemplazar tu progreso local?`)) {
-          completedCourses = incoming;
-          save(); updateStats(); renderQuarters();
-          showSyncMsg('ok', `✓ ${incomingCount} materias cargadas`);
-          closeDrawer();
-        } else {
-          document.getElementById('syncStatus').classList.remove('show');
-        }
-      } else {
-        showSyncMsg('ok', `✓ Local (${localCount}) ≥ Drive (${incomingCount}) — no se modificó`);
-      }
-    }
-  } catch(e) {
-    showSyncMsg('err', '✗ Error al cargar desde Drive');
-  }
-  if (!silent) document.getElementById('btnDownload').disabled = false;
-}
-
-// ── Confetti ──────────────────────────────────────────────
+// ── Confetti engine ───────────────────────────────────────
 const canvas = document.getElementById('confettiCanvas');
 const ctx    = canvas.getContext('2d');
 let particles = [];
@@ -689,19 +460,33 @@ function launchConfetti(){
 
 // ── Celebration check ─────────────────────────────────────
 function checkCelebration(pct){
-  const banner=document.getElementById('celebBanner');
-  const sub=document.getElementById('headerSub');
-  const bars=document.querySelectorAll('.stat-bar-fill');
-  const cards=document.querySelectorAll('.stat-card');
-  if(pct>=90){
+  const banner = document.getElementById('celebBanner');
+  const sub    = document.getElementById('headerSub');
+  const bars   = document.querySelectorAll('.stat-bar-fill');
+  const cards  = document.querySelectorAll('.stat-card');
+
+  clearMilestoneIfBelow(pct);
+
+  if(pct >= 90){
     document.getElementById('mainHeader').classList.add('glow');
     sub.classList.add('fire');
-    sub.textContent=pct===100?'🎓 ¡Pensum completado!':`🔥 ${pct}% — ¡Ya casi terminas!`;
+    sub.textContent = pct===100 ? '🎓 ¡Pensum completado!' : `🔥 ${pct}% — ¡Ya casi terminas!`;
     cards.forEach(c=>c.classList.add('glowing'));
     bars.forEach(b=>b.classList.add('fire'));
-    if(!wasAbove90){
-      wasAbove90=true; launchConfetti();
-      banner.textContent=pct===100?'🎓 ¡Lo lograste! ¡Pensum completo!':'🔥 ¡Ya estás en la recta final!';
+
+    // Milestone 100
+    if(pct===100 && !getMilestoneSeen(100)){
+      markMilestoneSeen(100);
+      launchConfetti();
+      banner.textContent='🎓 ¡Lo lograste! ¡Pensum completo!';
+      banner.classList.add('show');
+      setTimeout(()=>banner.classList.remove('show'),5000);
+    }
+    // Milestone 90 (solo si no es 100)
+    else if(pct>=90 && pct<100 && !getMilestoneSeen(90)){
+      markMilestoneSeen(90);
+      launchConfetti();
+      banner.textContent='🔥 ¡Ya estás en la recta final!';
       banner.classList.add('show');
       setTimeout(()=>banner.classList.remove('show'),4000);
     }
@@ -711,13 +496,12 @@ function checkCelebration(pct){
     sub.textContent='Ing. de Software · UNICARIBE';
     cards.forEach(c=>c.classList.remove('glowing'));
     bars.forEach(b=>b.classList.remove('fire'));
-    wasAbove90=false;
   }
 }
 
 // ── Helpers ───────────────────────────────────────────────
 function findCourse(code){ for(const q of coursesData.quarters) for(const c of q.courses) if(c.code===code) return c; return null; }
-function save(){ localStorage.setItem('completedCourses',JSON.stringify([...completedCourses])); }
+function saveLocal(){ localStorage.setItem('completedCourses',JSON.stringify([...completedCourses])); }
 function calculatePGA(){
   let pts=0,cred=0;
   completedCourses.forEach((g,code)=>{ const c=findCourse(code); if(c){pts+=g*c.credits;cred+=c.credits;} });
@@ -753,7 +537,7 @@ function renderQuarters(){
     const filtered=quarter.courses.filter(c=>{
       const done=completedCourses.has(c.code);
       return (c.name.toLowerCase().includes(search)||c.code.toLowerCase().includes(search))
-        && (filter==='all'||(filter==='completed'&&done)||(filter==='pending'&&!done));
+        &&(filter==='all'||(filter==='completed'&&done)||(filter==='pending'&&!done));
     });
     if(!filtered.length) return;
     const doneCount=filtered.filter(c=>completedCourses.has(c.code)).length;
@@ -791,11 +575,11 @@ function renderQuarters(){
 }
 
 // ── Toggle / Modal ────────────────────────────────────────
-function toggleCourse(code){
+window.toggleCourse = function(code){
   if(completedCourses.has(code)){
-    if(confirm('¿Quitar esta materia de completadas?')){ completedCourses.delete(code); save(); updateStats(); renderQuarters(); }
+    if(confirm('¿Quitar esta materia de completadas?')){ completedCourses.delete(code); saveLocal(); updateStats(); renderQuarters(); }
   } else { const c=findCourse(code); if(c) openModal(c); }
-}
+};
 function openModal(c){
   currentCode=c.code;
   document.getElementById('modalCode').textContent=c.code;
@@ -806,43 +590,135 @@ function openModal(c){
   document.getElementById('gradeModal').classList.add('open');
   setTimeout(()=>document.getElementById('gradeInput').focus(),100);
 }
-function closeModal(){ document.getElementById('gradeModal').classList.remove('open'); currentCode=null; }
-function submitGrade(){
+window.closeModal = function(){ document.getElementById('gradeModal').classList.remove('open'); currentCode=null; };
+window.submitGrade = function(){
   const val=document.getElementById('gradeInput').value;
   const err=document.getElementById('gradeError');
   const g=parseFloat(val);
   if(!val||isNaN(g)||g<0||g>100){ err.textContent='Ingresa una calificación entre 0 y 100.'; err.classList.remove('hidden'); return; }
-  completedCourses.set(currentCode,g); save(); updateStats(); renderQuarters(); closeModal();
+  completedCourses.set(currentCode,g); saveLocal(); updateStats(); renderQuarters(); window.closeModal();
+};
+
+// ── Firebase Auth ─────────────────────────────────────────
+window.handleSignIn = async function(){
+  try {
+    const result = await signInWithPopup(auth, provider);
+    // onAuthStateChanged lo maneja
+  } catch(e) {
+    showSyncMsg('err','Error al iniciar sesión: '+e.message);
+  }
+};
+
+window.handleSignOut = async function(){
+  await signOut(auth);
+  currentUser=null;
+  document.getElementById('signedInView').classList.add('hidden');
+  document.getElementById('signedOutView').classList.remove('hidden');
+  document.getElementById('googleCard').classList.remove('connected');
+  document.getElementById('syncStatus').classList.remove('show');
+};
+
+onAuthStateChanged(auth, async (user) => {
+  if(user){
+    currentUser=user;
+    document.getElementById('signedOutView').classList.add('hidden');
+    document.getElementById('signedInView').classList.remove('hidden');
+    document.getElementById('googleCard').classList.add('connected');
+    document.getElementById('userName').textContent  = user.displayName||'Usuario';
+    document.getElementById('userEmail').textContent = user.email||'';
+    const av = document.getElementById('userAvatar');
+    av.innerHTML = user.photoURL ? `<img src="${user.photoURL}" alt="avatar">` : (user.displayName||'U')[0].toUpperCase();
+    // Auto-cargar progreso al iniciar sesión
+    await loadFromFirebase(true);
+  }
+});
+
+// ── Firestore sync ────────────────────────────────────────
+function showSyncMsg(type, msg, duration=4000){
+  const el=document.getElementById('syncStatus');
+  el.className='sync-status show '+type;
+  el.innerHTML=(type==='info'?'<div class="spin-dot"></div>':'')+msg;
+  if(duration>0) setTimeout(()=>el.classList.remove('show'),duration);
 }
+
+window.uploadToFirebase = async function(){
+  if(!currentUser){ showSyncMsg('err','Inicia sesión primero'); return; }
+  document.getElementById('btnUpload').disabled=true;
+  showSyncMsg('info','Guardando en la nube…',0);
+  try {
+    await setDoc(doc(db,'progress',currentUser.uid),{
+      completedCourses: [...completedCourses.entries()],
+      savedAt: new Date().toISOString(),
+      displayName: currentUser.displayName
+    });
+    showSyncMsg('ok','✓ Guardado en la nube');
+  } catch(e){ showSyncMsg('err','✗ Error al guardar: '+e.message); }
+  document.getElementById('btnUpload').disabled=false;
+};
+
+window.loadFromFirebase = async function(silent=false){
+  if(!currentUser){ if(!silent) showSyncMsg('err','Inicia sesión primero'); return; }
+  if(!silent) document.getElementById('btnDownload').disabled=true;
+  showSyncMsg('info','Cargando desde la nube…',0);
+  try {
+    const snap = await getDoc(doc(db,'progress',currentUser.uid));
+    if(!snap.exists()){
+      showSyncMsg('ok','Sin datos en la nube aún — ¡empieza marcando materias!');
+      return;
+    }
+    const data = snap.data();
+    const incoming = new Map(data.completedCourses);
+    const inCount  = incoming.size;
+    const locCount = completedCourses.size;
+
+    if(silent){
+      if(locCount===0 || inCount > locCount){
+        completedCourses=incoming; saveLocal(); updateStats(); renderQuarters();
+        showSyncMsg('ok',`✓ ${inCount} materias cargadas`);
+      } else {
+        showSyncMsg('ok',`✓ Local (${locCount}) al día`);
+      }
+    } else {
+      const d = new Date(data.savedAt);
+      const ds = d.toLocaleDateString('es',{day:'numeric',month:'short',year:'numeric'});
+      if(confirm(`La nube tiene ${inCount} materias (${ds}).\n¿Reemplazar tu progreso local?`)){
+        completedCourses=incoming; saveLocal(); updateStats(); renderQuarters();
+        showSyncMsg('ok',`✓ ${inCount} materias cargadas`);
+        closeDrawer();
+      } else { document.getElementById('syncStatus').classList.remove('show'); }
+    }
+  } catch(e){ showSyncMsg('err','✗ Error al cargar: '+e.message); }
+  if(!silent) document.getElementById('btnDownload').disabled=false;
+};
 
 // ── Drawer ────────────────────────────────────────────────
 const drawer=document.getElementById('drawer');
 const drawerOverlay=document.getElementById('drawerOverlay');
 document.getElementById('menuBtn').addEventListener('click',()=>{ drawer.classList.add('open'); drawerOverlay.classList.add('open'); });
-function closeDrawer(){ drawer.classList.remove('open'); drawerOverlay.classList.remove('open'); }
-document.getElementById('closeDrawer').addEventListener('click',closeDrawer);
-drawerOverlay.addEventListener('click',closeDrawer);
+window.closeDrawer = function(){ drawer.classList.remove('open'); drawerOverlay.classList.remove('open'); };
+document.getElementById('closeDrawer').addEventListener('click',window.closeDrawer);
+drawerOverlay.addEventListener('click',window.closeDrawer);
 
 // ── Local import/export ───────────────────────────────────
-function exportProgress(){
+window.exportProgress = function(){
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([JSON.stringify({completedCourses:[...completedCourses.entries()],date:new Date().toISOString()},null,2)],{type:'application/json'}));
   a.download=`pensum_${new Date().toISOString().split('T')[0]}.json`;
   a.click(); URL.revokeObjectURL(a.href);
-}
-function importProgress(e){
+};
+window.importProgress = function(e){
   const file=e.target.files[0]; if(!file) return;
   const reader=new FileReader();
-  reader.onload=ev=>{ try { const data=JSON.parse(ev.target.result); if(!data.completedCourses) throw new Error(); if(confirm('¿Reemplazar tu progreso actual?')){ completedCourses=new Map(data.completedCourses); save(); updateStats(); renderQuarters(); closeDrawer(); } } catch{ alert('Archivo inválido.'); } };
+  reader.onload=ev=>{ try{ const data=JSON.parse(ev.target.result); if(!data.completedCourses) throw 0; if(confirm('¿Reemplazar tu progreso actual?')){ completedCourses=new Map(data.completedCourses); saveLocal(); updateStats(); renderQuarters(); window.closeDrawer(); } }catch{ alert('Archivo inválido.'); } };
   reader.readAsText(file);
-}
+};
 
 // ── Events ────────────────────────────────────────────────
 document.getElementById('searchInput').addEventListener('input',renderQuarters);
 document.getElementById('filterSelect').addEventListener('change',renderQuarters);
-document.getElementById('gradeInput').addEventListener('keydown',e=>{ if(e.key==='Enter') submitGrade(); });
-document.getElementById('gradeModal').addEventListener('click',e=>{ if(e.target.id==='gradeModal') closeModal(); });
-document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
+document.getElementById('gradeInput').addEventListener('keydown',e=>{ if(e.key==='Enter') window.submitGrade(); });
+document.getElementById('gradeModal').addEventListener('click',e=>{ if(e.target.id==='gradeModal') window.closeModal(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') window.closeModal(); });
 
 // ── Init ──────────────────────────────────────────────────
 updateStats();
