@@ -299,7 +299,8 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc }
+import { getFirestore, doc, setDoc, getDoc, enableNetwork,
+         initializeFirestore, persistentLocalCache, persistentMultipleTabManager }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 // ── Firebase config ───────────────────────────────────────
@@ -314,7 +315,10 @@ const firebaseConfig = {
 };
 const app      = initializeApp(firebaseConfig);
 const auth     = getAuth(app);
-const db       = getFirestore(app);
+// Use persistent cache so it works offline and reconnects automatically
+const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+});
 const provider = new GoogleAuthProvider();
 
 // ── Course data ───────────────────────────────────────────
@@ -684,14 +688,16 @@ window.uploadToFirebase = async function(){
   document.getElementById('btnUpload').disabled=false;
 };
 
-window.loadFromFirebase = async function(silent=false){
+window.loadFromFirebase = async function(silent=false, attempt=1){
   if(!currentUser){ if(!silent) showSyncMsg('err','Inicia sesión primero'); return; }
   if(!silent) document.getElementById('btnDownload').disabled=true;
-  showSyncMsg('info','Cargando desde la nube…',0);
+  showSyncMsg('info', attempt>1 ? `Reintentando (${attempt}/3)…` : 'Cargando desde la nube…', 0);
   try {
+    await enableNetwork(db);
     const snap = await getDoc(doc(db,'progress',currentUser.uid));
     if(!snap.exists()){
       showSyncMsg('ok','Sin datos en la nube aún — ¡empieza marcando materias!');
+      if(!silent) document.getElementById('btnDownload').disabled=false;
       return;
     }
     const data = snap.data();
@@ -712,10 +718,17 @@ window.loadFromFirebase = async function(silent=false){
       if(confirm(`La nube tiene ${inCount} materias (${ds}).\n¿Reemplazar tu progreso local?`)){
         completedCourses=incoming; saveLocal(); updateStats(); renderQuarters();
         showSyncMsg('ok',`✓ ${inCount} materias cargadas`);
-        closeDrawer();
+        window.closeDrawer();
       } else { document.getElementById('syncStatus').classList.remove('show'); }
     }
-  } catch(e){ showSyncMsg('err','✗ Error al cargar: '+e.message); }
+  } catch(e){
+    // Retry up to 3 times with increasing delay
+    if(attempt < 3){
+      setTimeout(()=> window.loadFromFirebase(silent, attempt+1), attempt * 2000);
+    } else {
+      showSyncMsg('err','✗ Sin conexión. Verifica tu internet e intenta de nuevo.');
+    }
+  }
   if(!silent) document.getElementById('btnDownload').disabled=false;
 };
 
