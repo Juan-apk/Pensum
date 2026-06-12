@@ -641,13 +641,17 @@ function showSyncMsg(type, msg, duration=4000){
   if(duration>0) setTimeout(()=>el.classList.remove('show'),duration);
 }
 
+// Convert Map → plain object (Firestore doesn't support nested arrays)
+function mapToObj(m){ const o={}; m.forEach((v,k)=>{ o[k]=v; }); return o; }
+function objToMap(o){ const m=new Map(); Object.entries(o).forEach(([k,v])=>m.set(k,v)); return m; }
+
 window.uploadToFirebase = async function(){
   if(!currentUser){ showSyncMsg('err','Inicia sesión primero'); return; }
   document.getElementById('btnUpload').disabled=true;
   showSyncMsg('info','Guardando en la nube…',0);
   try {
     await setDoc(doc(db,'progress',currentUser.uid),{
-      completedCourses: [...completedCourses.entries()],
+      completedCourses: mapToObj(completedCourses),
       savedAt: new Date().toISOString(),
       displayName: currentUser.displayName
     });
@@ -667,7 +671,7 @@ window.loadFromFirebase = async function(silent=false){
       return;
     }
     const data = snap.data();
-    const incoming = new Map(data.completedCourses);
+    const incoming = objToMap(data.completedCourses);
     const inCount  = incoming.size;
     const locCount = completedCourses.size;
 
